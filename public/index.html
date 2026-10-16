@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.5 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>ShoppingMart</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: sticky two-row retail header, 1240px content column, card grids that collapse to one column on phones */
+:root{
+  --bg:#F8FAFD; --surface:#FFFFFF; --sunk:#F1F5FA; --ink:#1E293B; --muted:#5D6A7E; --line:#E3E9F1;
+  --accent:#0E8476; --accent-ink:#FFFFFF; --accent-soft:#E4F6F2;
+  --gold:#A66B00; --gold-soft:#FFF5DF; --est:#6B57C9; --est-soft:#F1EEFD;
+  --good:#1D7D45; --good-soft:#E5F7EC; --bad:#B4402C; --bad-soft:#FDEDE9; --screen:#334155;
+  --sky:#EAF4FF; --peach:#FFF2E9; --mint:#E9F8F3;
+  --shadow:0 1px 2px rgba(30,41,59,.04),0 8px 24px rgba(30,41,59,.06);
+  --f-display:"Familjen Grotesk","Hanken Grotesk",system-ui,sans-serif;
+  --f-body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:14px;
+  color-scheme:light;
+}
+/* Light theme only: the store always renders in this palette. */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,48px);font-weight:700}
+h2{font-size:clamp(21px,2.4vw,27px);font-weight:700}
+h3{font-size:18px;font-weight:600}
+p{margin:0}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.mono,.price{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--muted)}
+
+/* demo strip + header */
+.demo{background:linear-gradient(90deg,var(--mint),var(--sky));color:var(--ink);font-size:12.5px;border-bottom:1px solid var(--line)}
+.demo .wrap{display:flex;gap:12px;justify-content:space-between;padding-block:6px;flex-wrap:wrap}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);transition:box-shadow .25s}
+header.top.scrolled{box-shadow:var(--shadow)}
+.hrow{display:flex;align-items:center;gap:14px;padding-block:12px}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--ink);white-space:nowrap}
+.logo:hover{text-decoration:none}
+.logo .mark{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center}
+.logo .m2{color:var(--accent)}
+.search{position:relative;flex:1;min-width:0}
+.search input{width:100%;height:42px;border:1px solid var(--line);background:var(--sunk);border-radius:11px;padding:0 14px 0 40px}
+.search input:focus{background:var(--surface);border-color:var(--accent);outline:none}
+.search svg{position:absolute;left:13px;top:12px}
+.ac{position:absolute;left:0;right:0;top:48px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;z-index:50}
+.ac button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:8px 12px;background:none;border:0;cursor:pointer}
+.ac button:hover,.ac button.on{background:var(--accent-soft)}
+.ac .thumb{width:34px;height:34px;flex:none}
+.icons{display:flex;gap:4px;align-items:center}
+.ib{position:relative;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 10px;border-radius:10px;border:0;background:none;color:var(--ink);cursor:pointer;font-size:14px;font-weight:500}
+.ib:hover{background:var(--sunk);text-decoration:none}
+.ib .lbl{display:none}
+@media (min-width:1080px){.ib .lbl{display:inline}}
+.badge{position:absolute;top:3px;right:2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:10.5px;font-weight:700;display:grid;place-items:center;font-family:var(--f-mono)}
+.badge.pop{animation:pop .4s}
+@keyframes pop{40%{transform:scale(1.35)}}
+nav.cats{border-top:1px solid var(--line)}
+nav.cats .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-block:6px}
+nav.cats a{white-space:nowrap;padding:6px 12px;border-radius:8px;color:var(--ink);font-size:14px;font-weight:500}
+nav.cats a:hover,nav.cats a.on{background:var(--sunk);text-decoration:none}
+nav.cats a.on{color:var(--accent)}
+nav.cats .sep{width:1px;background:var(--line);margin:6px 6px}
+.menu-btn{display:none}
+@media (max-width:760px){
+  .hrow{flex-wrap:wrap}
+  .search{order:9;flex-basis:100%}
+  .icons{margin-left:auto}
+  .hide-sm{display:none!important}
+}
+
+/* buttons, inputs, chips */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:11px;border:1px solid transparent;font-weight:600;cursor:pointer;transition:transform .12s,background .2s,box-shadow .2s;white-space:nowrap;font-size:14.5px}
+.btn:active{transform:scale(.97)}
+.btn:hover{text-decoration:none}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent)}
+.btn.sec{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.btn.sec:hover{border-color:var(--accent)}
+.btn.ghost{background:none;color:var(--accent);padding:0 8px}
+.btn.sm{height:34px;padding:0 12px;font-size:13.5px;border-radius:9px}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+label.f{display:grid;gap:5px;font-size:13.5px;font-weight:600}
+input.in,select.in,textarea.in{height:42px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:0 12px;font-weight:400;width:100%;min-width:0}
+textarea.in{height:auto;padding:10px 12px}
+input.in:focus,select.in:focus,textarea.in:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.err{color:var(--bad);font-size:13px;font-weight:500}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.chip.drop{background:var(--gold-soft);color:var(--gold)}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.est{background:var(--est-soft);color:var(--est)}
+.chip.acc{background:var(--accent-soft);color:var(--accent)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:var(--surface);padding:7px 13px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:7px}
+.pill.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.pill[disabled]{opacity:.4;cursor:not-allowed}
+.swatch{width:24px;height:24px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.swatch.on{box-shadow:0 0 0 2px var(--accent)}
+
+/* page */
+main{min-height:60vh;padding-block:24px 64px}
+.page{animation:pageIn .35s ease-out}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}}
+section.sec{margin-top:44px}
+.sech{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.sech p{color:var(--muted);margin-top:4px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.crumbs{font-size:13px;color:var(--muted);margin-bottom:14px;display:flex;gap:6px;flex-wrap:wrap}
+.crumbs a{color:var(--muted)}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.split{display:grid;gap:24px;grid-template-columns:1fr}
+@media (min-width:900px){.split{grid-template-columns:260px 1fr}.split.r{grid-template-columns:1fr 360px}}
+.empty{text-align:center;padding:48px 16px;color:var(--muted)}
+.empty h3{color:var(--ink);margin-bottom:6px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+
+/* hero */
+.hero{position:relative;overflow:hidden;border-radius:22px;background:
+  radial-gradient(600px 300px at 85% 20%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 70%),
+  radial-gradient(500px 280px at 60% 110%,color-mix(in srgb,var(--est) 12%,transparent),transparent 70%),
+  radial-gradient(420px 260px at 0% 0%,var(--peach),transparent 70%),var(--surface);
+  border:1px solid var(--line);display:grid;grid-template-columns:1fr;gap:24px;padding:clamp(24px,5vw,56px)}
+@media (min-width:900px){.hero{grid-template-columns:1.05fr 1fr}}
+.hero p.lead{font-size:18px;color:var(--muted);max-width:46ch;margin:16px 0 26px}
+.hero .ctas{display:flex;gap:10px;flex-wrap:wrap}
+.hero .stats{display:flex;gap:28px;margin-top:30px;flex-wrap:wrap}
+.hero .stats b{display:block;font-family:var(--f-mono);font-size:20px}
+.stage{position:relative;min-height:330px}
+.float{position:absolute;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:14px;animation:floaty 6s ease-in-out infinite;cursor:pointer}
+.float:nth-child(2){animation-delay:-2s}.float:nth-child(3){animation-delay:-4s}
+@keyframes floaty{50%{transform:translateY(-10px)}}
+.float .tag{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:13px}
+.ticker{display:inline-block;animation:tick 2.4s ease-in-out infinite}
+@keyframes tick{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+
+/* product card */
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;animation:cardIn .4s ease-out backwards;animation-delay:calc(var(--i,0)*40ms)}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.card .img{background:var(--sunk);aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;cursor:pointer;max-width:100%}
+.card .img svg{width:62%;height:auto;transition:transform .35s}
+.card:hover .img svg{transform:scale(1.06)}
+.card .body{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card .brand{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.card h3{font-size:16px;cursor:pointer}
+.card .pr{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.card .pr .price{font-size:19px;font-weight:600}
+.card .ref{font-size:12.5px;color:var(--muted)}
+.card .chips{display:flex;gap:5px;flex-wrap:wrap}
+.card .acts{display:flex;gap:8px;margin-top:auto;padding-top:8px}
+.card .acts .btn{flex:1}
+.card .tl{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:start;pointer-events:none}
+.card .tl>*{pointer-events:auto}
+.cmpbox{display:flex;align-items:center;gap:6px;font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 8px;cursor:pointer;font-weight:500}
+.cmpbox input{accent-color:var(--accent);margin:0}
+.heart{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;transition:transform .15s}
+.heart:active{transform:scale(.85)}
+.heart.on svg path{fill:var(--bad);stroke:var(--bad)}
+.stock{font-size:12.5px;font-weight:600}
+.stock.in{color:var(--good)}.stock.low{color:var(--gold)}.stock.out{color:var(--bad)}
+
+/* filters */
+.filters{display:grid;gap:18px;align-content:start}
+.filters h4{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;font-family:var(--f-body)}
+.filters .opt{display:flex;gap:8px;align-items:center;font-size:14px;padding:3px 0;cursor:pointer}
+.filters .opt input{accent-color:var(--accent)}
+.filters .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.fbtn{display:none}
+@media (max-width:899px){.fbtn{display:inline-flex}.filters{display:none}.filters.open{display:grid;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}}
+
+/* PDP */
+.pdp{display:grid;gap:28px;grid-template-columns:1fr}
+@media (min-width:960px){.pdp{grid-template-columns:1fr 1fr}}
+.gallery .main{background:var(--sunk);border-radius:18px;aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden;cursor:zoom-in;max-width:100%}
+.gallery .main svg{width:58%;height:auto;transition:transform .3s}
+.gallery .main.zoom svg{transform:scale(1.7)}
+.gallery .main.zoom{cursor:zoom-out}
+.thumbs{display:flex;gap:8px;margin-top:10px}
+.thumbs button{width:64px;height:64px;border-radius:12px;background:var(--sunk);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;padding:6px}
+.thumbs button.on{border-color:var(--accent)}
+.buy .price{font-size:32px;font-weight:600}
+.vgroup{margin-top:18px}
+.vgroup .eyebrow{margin-bottom:8px}
+.specs{display:grid;grid-template-columns:1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.specs div{display:grid;grid-template-columns:minmax(120px,40%) 1fr;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.specs div:last-child{border-bottom:0}
+.specs dt{color:var(--muted)}
+.specs dd{margin:0;font-weight:500}
+
+/* price intelligence */
+.pi{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.pi .k{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.pi .v{font-family:var(--f-mono);font-size:18px;font-weight:600;margin-top:2px}
+.chartbox{position:relative}
+.chartbox svg{width:100%;height:auto;display:block}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow);font-size:12.5px;padding:6px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-110%);font-family:var(--f-mono)}
+.insights{display:grid;gap:10px}
+.insight{display:flex;gap:12px;padding:12px 14px;border-radius:12px;background:var(--sunk);font-size:14px}
+.insight .dot{width:8px;height:8px;border-radius:50%;margin-top:7px;flex:none}
+.disclaim{font-size:12.5px;color:var(--muted);border-left:3px solid var(--est);padding-left:10px}
+
+/* compare */
+.cmp-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.cmp{min-width:640px}
+.cmp th{background:var(--surface);text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);vertical-align:bottom}
+.cmp td.best{background:var(--accent-soft);font-weight:600}
+.cmp td:first-child,.cmp th:first-child{position:sticky;left:0;background:var(--sunk);z-index:1;font-weight:600;color:var(--muted);font-size:13px;min-width:140px}
+.winner{border:2px solid var(--accent);border-radius:18px;padding:20px;background:linear-gradient(135deg,var(--accent-soft),var(--surface) 60%);display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:760px){.winner{grid-template-columns:120px 1fr auto;align-items:center}}
+.bar{height:8px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:5px;transition:width .5s}
+.weights{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.weights label{font-size:13px;font-weight:600;display:grid;gap:4px}
+.weights input{accent-color:var(--accent)}
+.tray{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:10px 10px 10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 32px rgba(30,41,59,.14);max-width:calc(100% - 32px);animation:trayIn .3s ease-out}
+@keyframes trayIn{from{transform:translate(-50%,30px);opacity:0}}
+.tray .slots{display:flex;gap:6px}
+.tray .slot{width:38px;height:38px;border-radius:9px;background:var(--sunk);display:grid;place-items:center;position:relative}
+.tray .slot svg{width:28px;height:28px}
+
+/* drawer, modal, toast */
+.scrim{position:fixed;inset:0;background:rgba(30,41,59,.22);backdrop-filter:blur(2px);z-index:60;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(400px,100%);background:var(--surface);z-index:61;padding:calc(20px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) 20px;display:flex;flex-direction:column;gap:14px;animation:slideIn .3s cubic-bezier(.2,.8,.2,1);overflow-y:auto}
+@keyframes slideIn{from{transform:translateX(100%)}}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 32px));max-height:calc(100% - 40px);overflow-y:auto;background:var(--surface);border-radius:20px;z-index:61;padding:24px;animation:modalIn .25s ease-out;box-shadow:var(--shadow)}
+@keyframes modalIn{from{opacity:0;transform:translate(-50%,-46%)}}
+.toasts{position:fixed;right:max(16px,env(safe-area-inset-right,0px));top:calc(80px + env(safe-area-inset-top,0px));z-index:70;display:grid;gap:8px;max-width:calc(100% - 32px)}
+.toast{background:var(--surface);color:var(--ink);border:1px solid var(--line);padding:11px 15px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);animation:toastIn .3s ease-out;display:flex;gap:9px;align-items:center;max-width:360px}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}}
+.mini{display:flex;gap:12px;align-items:center}
+.mini .th{width:56px;height:56px;border-radius:10px;background:var(--sunk);display:grid;place-items:center;flex:none}
+.mini .th svg{width:40px;height:40px}
+
+/* checkout + orders */
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.steps span{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.steps span.on{background:var(--accent);color:var(--accent-ink)}
+.steps span.done{background:var(--accent-soft);color:var(--accent)}
+.sumrow{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:14.5px}
+.sumrow.total{border-top:1px solid var(--line);margin-top:6px;padding-top:12px;font-weight:700;font-size:17px}
+.timeline{display:grid;gap:0;position:relative}
+.tstep{display:grid;grid-template-columns:26px 1fr;gap:12px;padding-bottom:16px;position:relative}
+.tstep::before{content:"";position:absolute;left:12px;top:22px;bottom:0;width:2px;background:var(--line)}
+.tstep:last-child::before{display:none}
+.tstep .c{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;z-index:1}
+.tstep.done .c{background:var(--accent);border-color:var(--accent)}
+.tstep.done::before{background:var(--accent)}
+.tstep.now .c{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.radio{display:flex;gap:12px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;background:var(--surface)}
+.radio:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.radio input{accent-color:var(--accent);margin-top:4px}
+.gw{border:1px dashed var(--est);background:var(--est-soft);border-radius:12px;padding:12px;font-size:13.5px}
+
+/* account */
+.side{display:grid;gap:2px;align-content:start}
+.side a{padding:9px 12px;border-radius:9px;color:var(--ink);font-weight:500}
+.side a.on,.side a:hover{background:var(--surface);text-decoration:none;color:var(--accent)}
+.kpis{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.kpi b{display:block;font-family:var(--f-mono);font-size:24px;margin-top:4px}
+.auth{max-width:440px;margin:20px auto}
+.form{display:grid;gap:14px}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.form .two{grid-template-columns:1fr}}
+.note{background:var(--sunk);border-radius:12px;padding:12px 14px;font-size:13.5px}
+
+/* home tiles */
+.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:14px;color:var(--ink);transition:transform .2s,border-color .2s}
+.tile:hover{transform:translateY(-2px);border-color:var(--accent);text-decoration:none}
+.tile .ic{width:58px;height:58px;border-radius:14px;background:var(--sunk);display:grid;place-items:center;flex:none}
+.tile .ic svg{width:44px;height:44px}
+.benefits{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.benefit{display:flex;gap:12px}
+.benefit .bi{width:40px;height:40px;border-radius:11px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.band{background:linear-gradient(120deg,var(--sky),var(--mint) 50%,var(--peach));color:var(--ink);border:1px solid var(--line);border-radius:22px;padding:clamp(22px,4vw,40px);display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:860px){.band{grid-template-columns:1.2fr 1fr;align-items:center}}
+.band p{color:var(--muted)}
+.band input.in{background:var(--surface);border-color:var(--line);color:var(--ink)}
+footer{background:var(--surface);border-top:1px solid var(--line);padding-block:40px 28px;font-size:14px}
+footer .cols{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+footer h4{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;font-family:var(--f-body)}
+footer a{display:block;color:var(--ink);padding:3px 0}
+.prose{max-width:68ch;display:grid;gap:12px}
+.prose h3{margin-top:12px}
+.skel{background:linear-gradient(90deg,var(--sunk),var(--line),var(--sunk));background-size:200% 100%;animation:sk 1.2s infinite;border-radius:8px}
+@keyframes sk{to{background-position:-200% 0}}
+img.pimg{display:block;width:100%;height:100%;object-fit:contain}
+.card .img img.pimg{width:84%;height:84%;transition:transform .35s}
+.card:hover .img img.pimg{transform:scale(1.05)}
+.gallery .main img.pimg{width:88%;height:88%;transition:transform .3s}
+.gallery .main.zoom img.pimg{transform:scale(1.8)}
+.float img.pimg{height:150px}
+.tile .ic img.pimg,.mini .th img.pimg,.tray .slot img.pimg,.thumbs img.pimg,.ac .thumb img.pimg{width:90%;height:90%;margin:auto}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+
+<div class="demo"><div class="wrap"><span id="demoStrip"><b>Loading catalog…</b></span><a href="#help" style="color:inherit;text-decoration:underline">How this demo works</a></div></div>
+<header class="top" id="hdr">
+  <div class="wrap hrow">
+    <a class="logo" href="#home" aria-label="ShoppingMart home"><span class="mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 10.2a1.5 1.5 0 0 0 1.5 1.1h8.3a1.5 1.5 0 0 0 1.4-1L21 8H7"/><path d="M10 11l2.5 2L17 9"/></svg></span><span>Shopping<span class="m2">Mart</span></span></a>
+    <div class="search" id="searchBox">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search phones, laptops, brands…" autocomplete="off" aria-label="Search products">
+      <div class="ac" id="ac" hidden></div>
+    </div>
+    <div class="icons">
+      <a class="ib hide-sm" href="#compare" aria-label="Compare"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></svg><span class="lbl">Compare</span><span class="badge" id="bCmp" hidden></span></a>
+      <a class="ib hide-sm" href="#alerts" aria-label="Price alerts"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/></svg><span class="lbl">Alerts</span><span class="badge" id="bNot" hidden></span></a>
+      <a class="ib" href="#wishlist" aria-label="Wishlist"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span class="badge" id="bWish" hidden></span></a>
+      <a class="ib" href="#account" id="acctBtn" aria-label="Account"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl" id="acctLbl">Sign in</span></a>
+      <button class="ib" data-act="openCart" aria-label="Cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2.4 10.2a1.5 1.5 0 0 0 1.5 1.1h8.3a1.5 1.5 0 0 0 1.4-1L21 8H7"/><circle cx="9" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg><span class="lbl">Cart</span><span class="badge" id="bCart" hidden></span></button>
+    </div>
+  </div>
+  <nav class="cats" aria-label="Categories"><div class="wrap" id="catnav"></div></nav>
+</header>
+<main><div class="wrap" id="app"></div></main>
+<footer><div class="wrap">
+  <div class="cols">
+    <div><a class="logo" href="#home" style="padding:0;margin-bottom:10px"><span>Shopping<span class="m2">Mart</span></span></a><p class="muted small">Compare specs, read price history and buy at a better time. Prices in Indian rupees, GST included.</p></div>
+    <div><h4>Shop</h4><a href="#cat-smartphones">Smartphones</a><a href="#cat-laptops">Laptops</a><a href="#cat-audio">Headphones &amp; audio</a><a href="#cat-watches">Smartwatches</a></div>
+    <div><h4>Smart tools</h4><a href="#compare">Compare products</a><a href="#trends">Price trends</a><a href="#alerts">Price alerts</a><a href="#notifications">Notifications</a></div>
+    <div><h4>Help</h4><a href="#help">Support &amp; FAQ</a><a href="#orders">Track an order</a><a href="#contact">Contact us</a><a href="#about">About us</a></div>
+    <div><h4>Policies</h4><a href="#policies">Shipping</a><a href="#policies">Returns &amp; refunds</a><a href="#policies">Privacy</a><a href="#policies">Terms</a><a href="admin.html">Admin panel</a></div>
+  </div>
+  <p class="muted small" style="margin-top:28px">© 2026 ShoppingMart. Price histories before the first admin-recorded price are sample data, not live market prices.</p>
+</div></footer>
+<div id="tray"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="layer"></div>
+
+<script src="js/catalog.js"></script>
+<script>
+/* ================= utilities ================= */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inr=p=>'₹'+Math.round(p/100).toLocaleString('en-IN');
+const pct=x=>(Math.round(x*10)/10).toLocaleString('en-IN')+'%';
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const dayDate=off=>new Date(TODAY.getTime()+off*864e5);
+const fmtD=d=>d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const fmtDT=t=>new Date(t).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function hashStr(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}return h>>>0}
+function rng(seed){let a=seed;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+async function sha(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return'f'+(h>>>0).toString(16)}}
+
+/* catalog (CATS, RAW, C) is loaded from js/catalog.js */
+// sale windows (day offsets from today): festive 2025, Republic Day, summer, mid-year, current festive
+const SALES=[[-362,-354],[-270,-265],[-158,-153],[-94,-89],[-16,0]];
+function buildHistory(p,oi){
+  const r=rng(hashStr(p.id+':'+oi)), n=p.days, base=(p.base+p.opts[oi].add)*100;
+  const brandMul=hashStr(p.id)%3===0;const live=r()<.65; // whether the current sale applies to this product
+  let lvl=base*(1+r()*.03); const out=[];
+  for(let i=0;i<n;i++){
+    const off=i-(n-1);
+    lvl*=1-p.decay/365*(0.6+r()*.8);
+    if(r()<.012)lvl*=1+(r()<.5?-1:1)*(.01+r()*.02);
+    let pr=lvl;
+    for(const [a,b] of SALES){if(off>=a&&off<=b&&!(b===0&&!live))pr*=1-p.sale*(.7+.3*Math.sin((off-a+1)/(b-a+2)*Math.PI));}
+    out.push(Math.round(pr/10000)*10000);
+  }
+  return out;
+}
+let S, UI={sel:{},range:90,filters:{},q:'',route:'home',prio:{},wts:{},checkout:{step:1},adminTab:'overview'};
+const PRODUCTS={},HIST={},BASE={};RAW.forEach(p=>BASE[p.id]=p);
+let REMOTE={},LIVE={state:'connecting',detail:''};
+const dayStart=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()};
+const daysAgo=t=>Math.round((TODAY.getTime()-dayStart(t))/864e5);
+/* Builds the live catalog: base sample products, overridden by Firestore docs, plus products created in the admin panel. */
+function catalog(){
+  for(const k in PRODUCTS)delete PRODUCTS[k];
+  const ids=[...new Set([...RAW.map(p=>p.id),...Object.keys(REMOTE)])];
+  for(const id of ids){
+    const b=BASE[id],r=REMOTE[id]||{};
+    if(!b&&!(r.title&&CATS[r.cat]))continue;           // incomplete admin draft
+    if(r.published===false)continue;                    // hidden by admin
+    const p=b?{...b}:{id,cat:r.cat,brand:r.brand||'',series:r.series||'',title:r.title,base:+r.base||0,decay:0,sale:0,days:1,opts:[{v:'Standard',add:0,spec:{}}],cols:[C('Default','#8A93A0')],spec:{},feats:[],remoteOnly:true};
+    for(const f of ['title','brand','series','desc'])if(r[f])p[f]=r[f];
+    if(Array.isArray(r.feats)&&r.feats.length)p.feats=r.feats;
+    if(!b){if(Array.isArray(r.opts)&&r.opts.length)p.opts=r.opts;if(Array.isArray(r.cols)&&r.cols.length)p.cols=r.cols;}
+    if(r.spec)p.spec={...p.spec,...r.spec};
+    p.images=Array.isArray(r.images)?r.images.filter(i=>i&&i.url):[];
+    p.liveStock=r.stock||{};p.priceLog=Array.isArray(r.priceLog)?r.priceLog:[];
+    p.cols=p.cols&&p.cols.length?p.cols:[C('Default','#8A93A0')];
+    p.feats=p.feats||[];
+    PRODUCTS[id]=p;
+    p.opts.forEach((o,oi)=>{const k=id+'~'+oi;
+      if(b){if(!HIST[k])HIST[k]=buildHistory(p,oi)}
+      else{const n=Math.max(1,Math.min(365,(r.createdAt?daysAgo(r.createdAt):0)+1));p.days=n;HIST[k]=Array(n).fill(Math.round((p.base+(+o.add||0))*100))}});
+  }
+}
+/* Called by js/store-sync.js whenever the Firestore "products" collection changes. */
+window.applyRemote=(docs)=>{
+  REMOTE=docs||{};catalog();for(const k in FC)delete FC[k];
+  S.compare=S.compare.filter(id=>PRODUCTS[id]);
+  const mine=S.notifs.filter(n=>n.user===S.session&&!n.read).length;
+  evaluateAlerts('live-update');save();
+  if(S.session&&S.notifs.filter(n=>n.user===S.session&&!n.read).length>mine)toast('A price alert was just met. Check notifications.');
+  const ae=document.activeElement;
+  if(ae&&$('#app').contains(ae)&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)){UI.pendingRender=true;chrome();return}
+  rerender();
+};
+window.setLiveStatus=(state,detail)=>{LIVE={state,detail};const el=$('#demoStrip');if(!el)return;
+  el.innerHTML=state==='live'?'<b>Live catalog.</b> Products, photos, prices and stock load from Firebase. Carts, accounts and orders are still demo data in this browser.'
+   :state==='off'?'<b>Demo mode.</b> '+esc(detail)+' Payments run in test mode.'
+   :'<b>Catalog offline.</b> '+esc(detail);
+  if(state!=='live'&&UI.route.startsWith('p-'))rerender();};
+setTimeout(()=>{if(LIVE.state==='connecting')window.setLiveStatus('error','Firebase did not respond. Showing the built-in sample catalog.')},8000);
+function series(pid,oi){const k=pid+'~'+oi,h=HIST[k].slice(),ov=S.ov.price[k],p=PRODUCTS[pid];
+  if(p&&p.priceLog&&p.priceLog.length){const n=h.length;p.priceLog.filter(e=>+e.oi===+oi&&e.price>0).sort((a,b)=>a.at-b.at).forEach(e=>{const idx=Math.max(0,n-1-daysAgo(e.at));for(let j=idx;j<n;j++)h[j]=e.price})}if(ov)for(const [off,v] of Object.entries(ov)){const idx=h.length-1+ +off;if(idx>=0)h[idx]=v;}return h;}
+const priceOf=(pid,oi=0)=>{const h=series(pid,oi);return h[h.length-1]};
+const skuOf=(pid,oi,ci)=>pid+'~'+oi+'~'+ci;
+function stockOf(sku){const lp=PRODUCTS[sku.split('~')[0]];if(lp&&lp.liveStock&&lp.liveStock[sku]!=null)return Math.max(0,(+lp.liveStock[sku]||0)-(S.sold[sku]||0));if(S.ov.stock[sku]!=null)return Math.max(0,S.ov.stock[sku]-(S.sold[sku]||0));const r=rng(hashStr(sku))();const base=r<.07?0:r<.2?1+Math.floor(r*20)%4:12+Math.floor(r*100)%30;return Math.max(0,base-(S.sold[sku]||0));}
+const prodStock=pid=>PRODUCTS[pid].opts.reduce((s,_,oi)=>s+PRODUCTS[pid].cols.reduce((t,_,ci)=>t+stockOf(skuOf(pid,oi,ci)),0),0);
+function specOf(p,oi){return Object.assign({},p.spec,p.opts[oi]?.spec||{})}
+
+/* ================= forecasting (damped Holt, chronological backtest) ================= */
+function holt(y,a=.5,b=.15,phi=.85){let l=y[0],t=y.length>1?y[1]-y[0]:0;const err=[];for(let i=1;i<y.length;i++){const f=l+phi*t;err.push(y[i]-f);const nl=a*y[i]+(1-a)*(l+phi*t);t=b*(nl-l)+(1-b)*phi*t;l=nl;}return{l,t,err,phi}}
+function project(m,h){let s=0;for(let k=1;k<=h;k++)s+=Math.pow(m.phi,k);return m.l+s*m.t}
+const FC={};
+function forecast(pid,oi){
+  const key=pid+'~'+oi+'~'+JSON.stringify(S.ov.price[pid+'~'+oi]||{})+'~'+(PRODUCTS[pid]?.priceLog?.length||0);if(FC[key])return FC[key];
+  const h=series(pid,oi),n=h.length;
+  if(n<60)return FC[key]={insufficient:true,n};
+  const w=[];for(let i=n-1;i>=0&&w.length<26;i-=7)w.unshift(h[i]);
+  const m=holt(w),rmse=Math.sqrt(m.err.slice(2).reduce((s,e)=>s+e*e,0)/Math.max(1,m.err.length-2));
+  // chronological backtest: fit on all but the last 4 weeks, forecast those 4 weeks
+  const mb=holt(w.slice(0,-4));let ape=0;for(let k=1;k<=4;k++)ape+=Math.abs(project(mb,k)-w[w.length-5+k])/w[w.length-5+k];
+  const mape=ape/4*100;
+  const cur=h[n-1],pts=[];for(let k=1;k<=5;k++){const mid=project(m,k)*(cur/w[w.length-1]);const band=1.64*rmse*Math.sqrt(k);pts.push({off:k*6,mid,lo:mid-band,hi:mid+band});}
+  const end=pts[pts.length-1],chg=(end.mid-cur)/cur;
+  const dir=chg<-.02?'falling':chg>.02?'rising':'stable';
+  const conf=mape<3?'Moderate':mape<7?'Low':'Very low';
+  return FC[key]={pts,dir,chg,lo:Math.max(0,Math.min(...pts.map(p=>p.lo))),hi:Math.max(...pts.map(p=>p.hi)),mape,conf,cur,endLo:end.lo,endHi:end.hi};
+}
+function stats(pid,oi){
+  const h=series(pid,oi),n=h.length,cur=h[n-1];
+  const at=d=>n>d?h[n-1-d]:null;
+  const last=k=>h.slice(Math.max(0,n-k));
+  const l90=last(90);
+  return{h,n,cur,w1:at(7),m1:at(30),min:Math.min(...h),max:Math.max(...h),avg:h.reduce((a,b)=>a+b,0)/n,min90:Math.min(...l90),first:h[0],firstDate:dayDate(-(n-1)),drop30:at(30)?(at(30)-cur):0,drop30p:at(30)?(at(30)-cur)/at(30)*100:0};
+}
+
+/* ================= state ================= */
+const KEY='shoppingmart_demo_v1';
+function fresh(){return{users:[],session:null,carts:{guest:[]},saved:{},wish:{},alerts:[],notifs:[],orders:[],ov:{price:{},stock:{}},sold:{},reviews:{},recent:{},compare:[],cmpCount:{},views:{},custom:[],addresses:{},prefs:{},newsletter:[],resets:{},jobs:[],emailQueue:[]}}
+function load(){try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}if(!S)S=fresh();const f=fresh();for(const k in f)if(S[k]==null)S[k]=f[k];}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const me=()=>S.users.find(u=>u.id===S.session)||null;
+const ukey=()=>S.session||'guest';
+const cart=()=>(S.carts[ukey()]=S.carts[ukey()]||[]);
+const wish=()=>(S.wish[ukey()]=S.wish[ukey()]||[]);
+const recent=()=>(S.recent[ukey()]=S.recent[ukey()]||[]);
+
+/* ================= device illustrations ================= */
+let gid=0;
+function shade(hex,amt){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.max(0,Math.min(255,Math.round(v+amt*255)));return'#'+[f(r),f(g),f(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function imgsFor(p,ci){const all=(p&&p.images)||[];if(!all.length)return[];const col=p.cols[ci]&&p.cols[ci].v;const m=all.filter(i=>i.colour&&i.colour===col);if(m.length)return m;const un=all.filter(i=>!i.colour);return un.length?un:all}
+function dev(p,ci=0,view=0){
+  const ims=imgsFor(p,ci);if(ims.length){const im=ims[view%ims.length];return`<img class="pimg" src="${esc(im.url)}" alt="${esc(im.alt||p.title)}" loading="lazy" decoding="async">`}
+  const c=(p.cols[ci]||p.cols[0]).hex,d=shade(c,-.18),l=shade(c,.12),id='g'+(++gid),t=CATS[p.cat].type;
+  const grad=`<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${l}"/><stop offset="1" stop-color="${d}"/></linearGradient></defs>`;
+  if(t==='phone'){
+    const pro=/Pro|Ultra/.test(p.title),wide=p.brand==='Google';
+    if(view===1)return`<svg viewBox="0 0 140 160" aria-hidden="true">${grad}<rect x="38" y="8" width="64" height="144" rx="13" fill="${d}"/><rect x="41" y="11" width="58" height="138" rx="10.5" fill="var(--screen)"/><rect x="60" y="16" width="20" height="5" rx="2.5" fill="#000"/><rect x="47" y="34" width="46" height="9" rx="4" fill="${c}" opacity=".85"/><rect x="47" y="50" width="30" height="5" rx="2.5" fill="#fff" opacity=".25"/><rect x="47" y="60" width="38" height="5" rx="2.5" fill="#fff" opacity=".18"/><g fill="${c}" opacity=".7"><rect x="47" y="110" width="10" height="10" rx="3"/><rect x="61" y="110" width="10" height="10" rx="3"/><rect x="75" y="110" width="10" height="10" rx="3"/></g></svg>`;
+    const cam=wide?`<rect x="38" y="30" width="64" height="20" rx="6" fill="${d}"/><circle cx="56" cy="40" r="5.5" fill="#15181d"/><circle cx="72" cy="40" r="5.5" fill="#15181d"/><circle cx="88" cy="40" r="3" fill="#15181d"/>`
+      :`<rect x="44" y="16" width="${pro?40:30}" height="${pro?40:34}" rx="9" fill="${d}" opacity=".9"/><circle cx="54" cy="27" r="5.5" fill="#15181d" stroke="${l}" stroke-width="1.5"/><circle cx="54" cy="${pro?46:44}" r="5.5" fill="#15181d" stroke="${l}" stroke-width="1.5"/>${pro?`<circle cx="72" cy="36" r="5.5" fill="#15181d" stroke="${l}" stroke-width="1.5"/>`:''}`;
+    return`<svg viewBox="0 0 140 160" aria-hidden="true">${grad}<rect x="38" y="8" width="64" height="144" rx="13" fill="url(#${id})"/><rect x="38" y="8" width="64" height="144" rx="13" fill="none" stroke="${d}" stroke-width="1.5"/>${cam}<path d="M44 14 L60 14 L44 70Z" fill="#fff" opacity=".12"/></svg>`;}
+  if(t==='laptop')return`<svg viewBox="0 0 160 120" aria-hidden="true">${grad}<rect x="28" y="14" width="104" height="70" rx="6" fill="${d}"/><rect x="32" y="18" width="96" height="62" rx="3" fill="var(--screen)"/>${view===1?`<rect x="38" y="26" width="44" height="6" rx="3" fill="${c}"/><rect x="38" y="38" width="80" height="4" rx="2" fill="#fff" opacity=".2"/><rect x="38" y="46" width="64" height="4" rx="2" fill="#fff" opacity=".14"/>`:`<path d="M32 18h96v62H32z" fill="${c}" opacity=".18"/><circle cx="80" cy="49" r="13" fill="${c}" opacity=".35"/>`}<path d="M18 86h124l-8 10H26z" fill="url(#${id})"/><rect x="68" y="86" width="24" height="3" rx="1.5" fill="${d}"/></svg>`;
+  if(t==='audio'){
+    if(/In-ear/.test(p.spec.form))return`<svg viewBox="0 0 140 130" aria-hidden="true">${grad}<rect x="30" y="52" width="80" height="58" rx="24" fill="url(#${id})"/><rect x="30" y="74" width="80" height="2" fill="${d}"/><g transform="rotate(-18 52 38)"><ellipse cx="52" cy="34" rx="12" ry="14" fill="${l}"/><rect x="48" y="40" width="8" height="26" rx="4" fill="${l}"/></g><g transform="rotate(18 88 38)"><ellipse cx="88" cy="34" rx="12" ry="14" fill="${l}"/><rect x="84" y="40" width="8" height="26" rx="4" fill="${l}"/></g><circle cx="70" cy="92" r="2.5" fill="${d}"/></svg>`;
+    return`<svg viewBox="0 0 140 140" aria-hidden="true">${grad}<path d="M32 82 C32 30 108 30 108 82" fill="none" stroke="${d}" stroke-width="10" stroke-linecap="round"/><path d="M34 80 C34 36 106 36 106 80" fill="none" stroke="${l}" stroke-width="3" opacity=".6"/><rect x="18" y="70" width="30" height="50" rx="14" fill="url(#${id})"/><rect x="92" y="70" width="30" height="50" rx="14" fill="url(#${id})"/><rect x="40" y="76" width="10" height="38" rx="5" fill="${d}"/><rect x="90" y="76" width="10" height="38" rx="5" fill="${d}"/></svg>`;}
+  return`<svg viewBox="0 0 120 150" aria-hidden="true">${grad}<rect x="38" y="4" width="44" height="40" rx="10" fill="${d}"/><rect x="38" y="106" width="44" height="40" rx="10" fill="${d}"/><rect x="28" y="36" width="64" height="78" rx="${p.brand==='Apple'?18:32}" fill="url(#${id})"/><rect x="33" y="41" width="54" height="68" rx="${p.brand==='Apple'?14:27}" fill="var(--screen)"/><text x="60" y="${view===1?70:80}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="15" fill="#fff">10:09</text>${view===1?`<circle cx="60" cy="90" r="7" fill="none" stroke="${c}" stroke-width="3"/>`:''}<rect x="92" y="62" width="5" height="14" rx="2" fill="${d}"/></svg>`;
+}
+
+/* ================= toasts, layers ================= */
+function toast(msg,ok=true){const t=document.createElement('div');t.className='toast';t.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${ok?'var(--accent)':'var(--bad)'}" stroke-width="2.6">${ok?'<path d="M5 12l5 5L20 7"/>':'<path d="M6 6l12 12M18 6 6 18"/>'}</svg><span>${esc(msg)}</span>`;$('#toasts').appendChild(t);setTimeout(()=>t.remove(),3200)}
+function openLayer(html,kind='modal'){$('#layer').innerHTML=`<div class="scrim" data-act="closeLayer"></div><div class="${kind}" role="dialog" aria-modal="true">${html}</div>`;const f=$('#layer [autofocus]')||$('#layer button,#layer input');f&&f.focus()}
+function closeLayer(){$('#layer').innerHTML=''}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLayer()});
+
+/* ================= header chrome ================= */
+function chrome(){
+  const set=(id,n)=>{const b=$(id);const was=b.textContent;b.hidden=!n;b.textContent=n;if(n&&String(n)!==was){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop')}};
+  set('#bCart',cart().reduce((s,i)=>s+i.qty,0));set('#bWish',wish().length);set('#bCmp',S.compare.length);
+  set('#bNot',S.session?S.notifs.filter(n=>n.user===S.session&&!n.read).length:0);
+  const u=me();$('#acctLbl').textContent=u?u.name.split(' ')[0]:'Sign in';$('#acctBtn').href=u?'#account':'#login';
+  const r=UI.route;
+  $('#catnav').innerHTML=`<a href="#shop" class="${r==='shop'?'on':''}">All products</a>`+Object.entries(CATS).map(([k,c])=>`<a href="#cat-${k}" class="${r==='cat-'+k?'on':''}">${esc(c.name)}</a>`).join('')+`<span class="sep"></span>`+['Apple','Samsung','OnePlus','Google','Sony'].map(b=>`<a href="#brand-${b.toLowerCase()}" class="${r==='brand-'+b.toLowerCase()?'on':''}">${b}</a>`).join('')+`<span class="sep"></span><a href="#compare" class="${r==='compare'?'on':''}">Compare</a><a href="#trends" class="${r==='trends'?'on':''}">Price trends</a><a href="#alerts" class="${r==='alerts'?'on':''}">Alerts</a>`;
+  tray();
+}
+window.addEventListener('scroll',()=>$('#hdr').classList.toggle('scrolled',scrollY>8),{passive:true});
+function tray(){
+  const t=$('#tray');if(!S.compare.length||UI.route==='compare'){t.innerHTML='';return}
+  t.innerHTML=`<div class="tray" role="region" aria-label="Comparison tray"><div><b>${S.compare.length}</b> <span class="small">of 4 to compare</span></div><div class="slots">${S.compare.map(id=>`<span class="slot" title="${esc(PRODUCTS[id].title)}">${dev(PRODUCTS[id])}</span>`).join('')}</div><button class="btn sm sec" data-act="clearCmp">Clear</button><a class="btn sm pri" href="#compare">Compare</a></div>`;
+}
+
+/* ================= search ================= */
+const norm=s=>s.toLowerCase();
+function searchProducts(q){q=norm(q.trim());if(!q)return[];const terms=q.split(/\s+/);return Object.values(PRODUCTS).filter(p=>{const hay=norm([p.title,p.brand,p.series,CATS[p.cat].name,p.brand+' '+p.title].join(' '));return terms.every(t=>hay.includes(t))})}
+const qi=$('#q'),ac=$('#ac');let acIdx=-1;
+qi.addEventListener('input',()=>{const r=searchProducts(qi.value).slice(0,6);acIdx=-1;if(!qi.value.trim()){ac.hidden=true;return}
+  ac.innerHTML=r.length?r.map((p,i)=>`<button data-act="go" data-to="p-${p.id}" data-i="${i}"><span class="thumb">${dev(p)}</span><span style="flex:1;min-width:0"><b>${esc(p.title)}</b><br><span class="small muted">${esc(p.brand)} · ${esc(CATS[p.cat].name)}</span></span><span class="price small">${inr(priceOf(p.id))}</span></button>`).join('')+`<button data-act="doSearch"><span class="small">See all results for “${esc(qi.value)}”</span></button>`:`<div style="padding:12px" class="small muted">No matches. Try a brand like “Samsung” or a category like “laptop”.</div>`;ac.hidden=false});
+qi.addEventListener('keydown',e=>{const btns=$$('button',ac);if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();acIdx=(acIdx+(e.key==='ArrowDown'?1:-1)+btns.length)%btns.length;btns.forEach((b,i)=>b.classList.toggle('on',i===acIdx))}else if(e.key==='Enter'){e.preventDefault();if(acIdx>=0&&btns[acIdx])btns[acIdx].click();else doSearch()}});
+document.addEventListener('click',e=>{if(!$('#searchBox').contains(e.target))ac.hidden=true});
+function doSearch(){UI.q=qi.value.trim();ac.hidden=true;if(location.hash==='#search')render();else location.hash='search'}
+
+/* ================= product card ================= */
+function cheapestOpt(p){let b=0;p.opts.forEach((o,i)=>{if(o.add<p.opts[b].add)b=i});return b}
+function trendChip(fc){if(fc.insufficient)return`<span class="chip">Not enough history</span>`;return fc.dir==='falling'?`<span class="chip est">↘ Estimate: may ease</span>`:fc.dir==='rising'?`<span class="chip est">↗ Estimate: may rise</span>`:`<span class="chip est">→ Estimate: stable</span>`}
+function stockLabel(n){return n<=0?`<span class="stock out">Out of stock</span>`:n<5?`<span class="stock low">Only ${n} left</span>`:`<span class="stock in">In stock</span>`}
+function card(p,i=0){
+  const oi=cheapestOpt(p),st=stats(p.id,oi),fc=forecast(p.id,oi),stock=prodStock(p.id),below=(st.first-st.cur)/st.first*100;
+  const inCmp=S.compare.includes(p.id),inW=wish().includes(p.id);
+  return`<article class="card" style="--i:${i}">
+  <div class="tl"><label class="cmpbox"><input type="checkbox" data-act="toggleCmp" data-id="${p.id}" ${inCmp?'checked':''}> Compare</label><button class="heart ${inW?'on':''}" data-act="toggleWish" data-id="${p.id}" aria-label="${inW?'Remove from':'Add to'} wishlist" aria-pressed="${inW}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button></div>
+  <div class="img" data-act="go" data-to="p-${p.id}">${dev(p)}</div>
+  <div class="body">
+    <span class="brand">${esc(p.brand)} · ${esc(p.series)}</span>
+    <h3 data-act="go" data-to="p-${p.id}">${esc(p.title)}</h3>
+    <div class="pr"><span class="price">${inr(st.cur)}</span>${p.opts.length>1?`<span class="small muted">${esc(p.opts[oi].v)}</span>`:''}</div>
+    ${below>=1?`<span class="ref">${pct(below)} below ${inr(st.first)} recorded ${fmtD(st.firstDate)}</span>`:`<span class="ref">Price history from ${fmtD(st.firstDate)}</span>`}
+    <div class="chips">${st.drop30p>=3?`<span class="chip drop">▼ ${inr(st.drop30)} in 30 days</span>`:''}${trendChip(fc)}</div>
+    ${stockLabel(stock)}
+    <div class="acts"><button class="btn sm pri" data-act="addCart" data-id="${p.id}" ${stock?'':'disabled'}>Add to cart</button><a class="btn sm sec" href="#p-${p.id}">Details</a></div>
+  </div></article>`;
+}
+const grid=(list,empty='No products match.')=>list.length?`<div class="grid">${list.map((p,i)=>card(p,i)).join('')}</div>`:`<div class="empty panel"><h3>Nothing here yet</h3><p>${empty}</p></div>`;
+
+/* ================= pages ================= */
+const P={};
+P.home=()=>{
+  const all=Object.values(PRODUCTS);
+  const withStats=all.map(p=>({p,st:stats(p.id,cheapestOpt(p)),fc:forecast(p.id,cheapestOpt(p))}));
+  const drops=withStats.filter(x=>x.st.drop30p>=3).sort((a,b)=>b.st.drop30p-a.st.drop30p);
+  const nearLow=withStats.filter(x=>x.st.n>=90&&x.st.cur<=x.st.min90*1.02);
+  let hero=['iphone-17','galaxy-s25-ultra','sony-wh1000xm6'].map(id=>PRODUCTS[id]).filter(Boolean);if(hero.length<3)hero=[...hero,...all.filter(p=>!hero.includes(p))].slice(0,3);
+  const recents=recent().map(id=>PRODUCTS[id]).filter(Boolean);
+  const pop=all.map(p=>({p,s:(S.views[p.id]||0)+5*S.orders.reduce((t,o)=>t+o.items.filter(i=>i.pid===p.id).reduce((a,i)=>a+i.qty,0),0)})).sort((a,b)=>b.s-a.s);
+  const popHas=pop[0]&&pop[0].s>0;
+  const newest=all.slice().sort((a,b)=>a.days-b.days||hashStr(b.id)-hashStr(a.id)).slice(0,4);
+  const value=bestValue(all).slice(0,4);
+  const rec=recommend().slice(0,4);
+  const spark=withStats.filter(x=>x.st.n>=180).sort((a,b)=>(b.st.max-b.st.min)/b.st.max-(a.st.max-a.st.min)/a.st.max).slice(0,3);
+  return`<div class="page">
+  <section class="hero">
+    <div>
+      <span class="chip acc">Price history and comparison built in</span>
+      <h1 style="margin-top:14px">Shop smarter. Compare better. Save more.</h1>
+      <p class="lead">Discover the right products, compare features, predict price drops, and buy at the right time.</p>
+      <div class="ctas"><a class="btn pri" href="#shop">Shop now</a><a class="btn sec" href="#compare">Compare products</a><a class="btn ghost" href="#trends">Explore price trends →</a></div>
+      <div class="stats"><div><b>${all.length}</b><span class="small muted">products tracked</span></div><div><b>${drops.length}</b><span class="small muted">dropped 3%+ in 30 days</span></div><div><b>${nearLow.length}</b><span class="small muted">near 90-day low</span></div></div>
+    </div>
+    <div class="stage" aria-hidden="false">
+      ${hero.map((p,i)=>{const st=stats(p.id,0);const pos=[['left:2%;top:4%;width:46%'],['right:0;top:18%;width:48%'],['left:22%;bottom:0;width:44%']][i];return`<div class="float" style="${pos}" data-act="go" data-to="p-${p.id}"><div style="background:var(--sunk);border-radius:12px;display:grid;place-items:center;padding:8px">${dev(p,i)}</div><div class="tag"><b style="font-size:13px">${esc(p.title)}</b><span class="price ticker">${inr(st.cur)}</span></div>${st.drop30p>0?`<span class="chip drop" style="margin-top:6px">▼ ${pct(st.drop30p)} in 30 days</span>`:''}</div>`}).join('')}
+    </div>
+  </section>
+
+  <section class="sec"><div class="sech"><div><h2>Shop by category</h2></div></div>
+    <div class="tiles">${Object.entries(CATS).map(([k,c])=>{const ps=all.filter(p=>p.cat===k);if(!ps.length)return'';return`<a class="tile" href="#cat-${k}"><span class="ic">${dev(ps[0])}</span><span><b>${esc(c.name)}</b><br><span class="small muted">${ps.length} products · from ${inr(Math.min(...ps.map(p=>priceOf(p.id,cheapestOpt(p)))))}</span></span></a>`}).join('')}</div></section>
+
+  <section class="sec"><div class="sech"><div><h2>${popHas?'Popular on ShoppingMart':'Featured this week'}</h2><p>${popHas?'Ranked by views and orders recorded in this demo.':'No browsing data yet, so these are editor picks. This list becomes popularity-based as people browse and order.'}</p></div><a href="#shop">View all</a></div>${grid((popHas?pop.map(x=>x.p):[...['iphone-17','galaxy-s25','macbook-air-m4','jbl-tune-770nc'].map(id=>PRODUCTS[id]).filter(Boolean),...all]).filter((p,i,a)=>a.indexOf(p)===i).slice(0,4))}</section>
+
+  <section class="sec"><div class="sech"><div><h2>Best deals today</h2><p>Biggest falls against each product's own price 30 days ago.</p></div><a href="#shop" data-act="setSort" data-sort="drop">See all drops</a></div>${grid(drops.slice(0,4).map(x=>x.p),'No product has fallen 3% or more in the last 30 days.')}</section>
+
+  <section class="sec"><div class="sech"><div><h2>Recently added</h2><p>Newest additions to the catalog. New items have short price histories, so no forecast yet.</p></div></div>${grid(newest)}</section>
+
+  <section class="sec"><div class="sech"><div><h2>Top smartphone brands</h2></div></div>
+    <div class="tiles">${['Apple','Samsung','OnePlus','Google','Xiaomi'].map(b=>{const ps=all.filter(p=>p.brand===b&&p.cat==='smartphones');if(!ps.length)return'';return`<a class="tile" href="#brand-${b.toLowerCase()}"><span class="ic">${dev(ps[0])}</span><span><b>${b}</b><br><span class="small muted">${[...new Set(ps.map(p=>p.series))].join(', ')}</span></span></a>`}).join('')}</div></section>
+
+  <section class="sec"><div class="panel" style="display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:center">
+    <div><span class="eyebrow">Smart comparison</span><h2 style="margin:6px 0 10px">Pick your priority. We rank the options and show why.</h2><p class="muted">Choose best camera, best battery, best value or set your own weights. Every score traces back to a published spec.</p><div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn pri" data-act="demoCompare" data-ids="iphone-17,galaxy-s25,pixel-10">Compare iPhone 17, Galaxy S25, Pixel 10</button></div></div>
+    <div>${miniCompare(['iphone-17','galaxy-s25','pixel-10'])}</div></div></section>
+
+  <section class="sec"><div class="sech"><div><h2>Major price drops</h2><p>Lowest prices recorded in the last 90 days.</p></div></div>${grid(nearLow.slice(0,4).map(x=>x.p),'Nothing is at its 90-day low right now.')}</section>
+
+  <section class="sec"><div class="sech"><div><h2>Buying-time insights</h2><p>Price history with a 30-day estimate. Estimates are not guarantees.</p></div><a href="#trends">All price trends</a></div>
+   <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">${spark.map(({p,st,fc})=>`<a class="panel" href="#p-${p.id}" style="color:var(--ink);display:grid;gap:10px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(p.title)}</b><span class="price">${inr(st.cur)}</span></div>${sparkline(st.h.slice(-180),fc)}<div class="small muted">180-day range ${inr(Math.min(...st.h.slice(-180)))} – ${inr(Math.max(...st.h.slice(-180)))}</div>${trendChip(fc)}</a>`).join('')}</div></section>
+
+  <section class="sec"><div class="sech"><div><h2>Recommended for you</h2><p>${recents.length||wish().length?'Based on what you viewed and saved in this browser.':'Pick what you are shopping for and we will tailor this list.'}</p></div></div>
+   ${recents.length||wish().length?'':`<div class="pills" style="margin-bottom:14px">${Object.entries(CATS).map(([k,c])=>`<button class="pill ${(S.prefs[ukey()]||[]).includes(k)?'on':''}" data-act="pref" data-cat="${k}">${esc(c.name)}</button>`).join('')}</div>`}${grid(rec)}</section>
+
+  <section class="sec"><div class="sech"><div><h2>Best value for money</h2><p>Highest spec score per rupee within each category.</p></div></div>${grid(value)}</section>
+
+  ${recents.length?`<section class="sec"><div class="sech"><div><h2>Recently viewed</h2></div><button class="btn ghost" data-act="clearRecent">Clear</button></div>${grid(recents.slice(0,4))}</section>`:''}
+
+  <section class="sec"><div class="benefits">${[['Price history on every product','See the real recorded prices before you decide.'],['GST invoice with every order','Prices include GST. Invoices list the tax split.'],['7-day returns','Return eligible items within 7 days of delivery.'],['Secure payments','UPI, cards, net banking and wallets through a payment gateway.']].map(([a,b])=>`<div class="benefit"><span class="bi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg></span><div><b>${a}</b><p class="small muted">${b}</p></div></div>`).join('')}</div></section>
+
+  <section class="sec"><div class="band"><div><h2>Get price-drop news first</h2><p style="margin-top:8px">A weekly email with the biggest verified drops. Or set an alert on any product page.</p></div>
+   <form data-form="newsletter" class="form" style="grid-template-columns:1fr auto;display:grid;gap:10px"><input class="in" id="nlEmail" type="email" required placeholder="you@example.com" aria-label="Email address"><button class="btn pri">Subscribe</button></form></div></section>
+  </div>`;
+};
+function sparkline(h,fc){const W=300,H=70,mn=Math.min(...h,fc&&!fc.insufficient?fc.lo:Infinity),mx=Math.max(...h,fc&&!fc.insufficient?fc.hi:-Infinity),n=h.length+(fc&&!fc.insufficient?30:0);const x=i=>i/(n-1)*W,y=v=>H-4-(v-mn)/(mx-mn||1)*(H-8);
+  const d=h.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');
+  let f='';if(fc&&!fc.insufficient){const pts=[{off:0,mid:h[h.length-1],lo:h[h.length-1],hi:h[h.length-1]},...fc.pts];const X=o=>x(h.length-1+o);f=`<path d="${pts.map((p,i)=>(i?'L':'M')+X(p.off)+' '+y(p.hi)).join('')}${pts.slice().reverse().map(p=>'L'+X(p.off)+' '+y(p.lo)).join('')}Z" fill="var(--est)" opacity=".16"/><path d="${pts.map((p,i)=>(i?'L':'M')+X(p.off)+' '+y(p.mid)).join('')}" fill="none" stroke="var(--est)" stroke-width="2" stroke-dasharray="4 3"/>`}
+  return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Price trend"><path d="${d}L${x(h.length-1)} ${H}L0 ${H}Z" fill="var(--accent)" opacity=".1"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2"/>${f}<circle cx="${x(h.length-1)}" cy="${y(h[h.length-1])}" r="3.5" fill="var(--accent)"/></svg>`}
+
+/* ---------- listing (shop / category / brand / series / search) ---------- */
+function listing(base,title,sub,crumbs){
+  const F=UI.filters,catSet=new Set(base.map(p=>p.cat)),oneCat=catSet.size===1?[...catSet][0]:(F.cats&&F.cats.length===1?F.cats[0]:null);
+  const brands=[...new Set(base.map(p=>p.brand))].sort();
+  let list=base.filter(p=>{
+    const oi=cheapestOpt(p),pr=priceOf(p.id,oi),st=stats(p.id,oi),fc=forecast(p.id,oi),sp=specOf(p,oi);
+    if(F.cats?.length&&!F.cats.includes(p.cat))return false;
+    if(F.brands?.length&&!F.brands.includes(p.brand))return false;
+    if(F.min&&pr<F.min*100)return false; if(F.max&&pr>F.max*100)return false;
+    if(F.inStock&&!prodStock(p.id))return false;
+    if(F.storage?.length&&!p.opts.some(o=>F.storage.includes(o.v)))return false;
+    if(F.colour?.length&&!p.cols.some(c=>F.colour.includes(c.v)))return false;
+    if(F.ram?.length&&!p.opts.some((o,i)=>F.ram.includes(String(specOf(p,i).ram))))return false;
+    if(F.os?.length&&!F.os.includes(sp.os))return false;
+    if(F.drop&&st.drop30p<F.drop)return false;
+    if(F.below&&(st.first-st.cur)/st.first*100<F.below)return false;
+    if(F.trend&&(fc.insufficient||fc.dir!==F.trend))return false;
+    return true});
+  const sorters={relevance:()=>0,low:(a,b)=>priceOf(a.id,cheapestOpt(a))-priceOf(b.id,cheapestOpt(b)),high:(a,b)=>priceOf(b.id,cheapestOpt(b))-priceOf(a.id,cheapestOpt(a)),rated:(a,b)=>rating(b.id).avg-rating(a.id).avg,popular:(a,b)=>(S.views[b.id]||0)-(S.views[a.id]||0),newest:(a,b)=>a.days-b.days,discount:(a,b)=>{const d=p=>{const s=stats(p.id,cheapestOpt(p));return(s.first-s.cur)/s.first};return d(b)-d(a)},drop:(a,b)=>stats(b.id,cheapestOpt(b)).drop30p-stats(a.id,cheapestOpt(a)).drop30p,predicted:(a,b)=>{const f=p=>{const x=forecast(p.id,cheapestOpt(p));return x.insufficient?9:x.chg};return f(a)-f(b)}};
+  list=list.slice().sort(sorters[F.sort||'relevance']);
+  const facet=(key,vals,label)=>vals.length>1?`<div><h4>${label}</h4>${vals.map(v=>`<label class="opt"><input type="checkbox" data-act="fArr" data-k="${key}" data-v="${esc(v)}" ${(F[key]||[]).includes(v)?'checked':''}> ${esc(v)}</label>`).join('')}</div>`:'';
+  const scope=oneCat?base.filter(p=>p.cat===oneCat):base;
+  const storages=[...new Set(scope.flatMap(p=>p.opts.map(o=>o.v)))].filter(v=>v!=='Standard');
+  const colours=[...new Set(scope.flatMap(p=>p.cols.map(c=>c.v)))].sort();
+  const rams=[...new Set(scope.flatMap(p=>p.opts.map((o,i)=>specOf(p,i).ram)).filter(Boolean))].sort((a,b)=>a-b).map(String);
+  const oses=[...new Set(scope.map(p=>p.spec.os).filter(Boolean))].sort();
+  const active=Object.entries(F).filter(([k,v])=>k!=='sort'&&(Array.isArray(v)?v.length:v)).length;
+  return`<div class="page">
+  <div class="crumbs">${crumbs}</div>
+  <div class="sech"><div><h1 style="font-size:clamp(26px,3.4vw,36px)">${esc(title)}</h1>${sub?`<p>${sub}</p>`:''}</div></div>
+  <div class="split">
+    <aside class="filters" id="filters" aria-label="Filters">
+      ${catSet.size>1?facet('cats',[...catSet],'Category').replace(/data-v="(\w+)"([^>]*)> (\w+)/g,(m,a,b)=>`data-v="${a}"${b}> ${esc(CATS[a].name)}`):''}
+      ${facet('brands',brands,'Brand')}
+      <div><h4>Price (₹)</h4><div class="row2"><input class="in" id="fMin" type="number" min="0" placeholder="Min" value="${F.min||''}" data-act="fNum" data-k="min" aria-label="Minimum price"><input class="in" id="fMax" type="number" min="0" placeholder="Max" value="${F.max||''}" data-act="fNum" data-k="max" aria-label="Maximum price"></div>
+        <div class="pills" style="margin-top:8px">${[[0,10000],[10000,30000],[30000,60000],[60000,0]].map(([a,b])=>`<button class="pill small" data-act="fRange" data-a="${a}" data-b="${b}" style="padding:4px 9px;font-size:12.5px">${b?`${a?'₹'+a/1000+'k–':'Under '}₹${b/1000}k`:`₹${a/1000}k+`}</button>`).join('')}</div></div>
+      <div><h4>Availability</h4><label class="opt"><input type="checkbox" data-act="fBool" data-k="inStock" ${F.inStock?'checked':''}> In stock only</label></div>
+      ${oneCat?facet('storage',storages,CATS[oneCat].vlabel):''}
+      ${oneCat&&CATS[oneCat].facets.includes('ram')?facet('ram',rams,'RAM (GB)'):''}
+      ${oneCat&&CATS[oneCat].facets.includes('os')?facet('os',oses,'Operating system'):''}
+      ${oneCat?facet('colour',colours,'Colour'):''}
+      <div><h4>Price movement</h4>
+        <label class="f" style="font-weight:500">Dropped in last 30 days<select class="in" data-act="fSel" data-k="drop" id="fDrop"><option value="">Any</option>${[3,5,10].map(v=>`<option value="${v}" ${F.drop==v?'selected':''}>${v}% or more</option>`).join('')}</select></label>
+        <label class="f" style="font-weight:500;margin-top:8px">Below first recorded price<select class="in" data-act="fSel" data-k="below" id="fBelow"><option value="">Any</option>${[5,10,20].map(v=>`<option value="${v}" ${F.below==v?'selected':''}>${v}% or more</option>`).join('')}</select></label>
+        <label class="f" style="font-weight:500;margin-top:8px">30-day estimate<select class="in" data-act="fSel" data-k="trend" id="fTrend"><option value="">Any</option><option value="falling" ${F.trend==='falling'?'selected':''}>May ease</option><option value="stable" ${F.trend==='stable'?'selected':''}>Stable</option><option value="rising" ${F.trend==='rising'?'selected':''}>May rise</option></select></label></div>
+      ${active?`<button class="btn sec sm" data-act="fClear">Clear all filters</button>`:''}
+    </aside>
+    <div style="min-width:0">
+      <div class="toolbar"><span class="muted"><b style="color:var(--ink)">${list.length}</b> of ${base.length} products${active?` · ${active} filter${active>1?'s':''} on`:''}</span>
+        <div style="display:flex;gap:8px"><button class="btn sec sm fbtn" data-act="toggleFilters">Filters${active?` (${active})`:''}</button>
+        <select class="in" style="height:36px;width:auto" data-act="fSel" data-k="sort" id="fSort" aria-label="Sort by">${[['relevance','Relevance'],['low','Price: low to high'],['high','Price: high to low'],['rated','Highest rated'],['popular','Most popular'],['newest','Newest arrivals'],['discount','Biggest discounts'],['drop','Largest recent drops'],['predicted','Best predicted value']].map(([v,l])=>`<option value="${v}" ${(F.sort||'relevance')===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+      ${grid(list,'Try removing a filter or widening the price range.')}
+    </div>
+  </div></div>`;
+}
+const crumb=(...a)=>[`<a href="#home">Home</a>`,...a].join('<span>/</span>');
+P.shop=()=>listing(Object.values(PRODUCTS),'All products',`Every product with its recorded price history.`,crumb('All products'));
+P.cat=id=>{const c=CATS[id];if(!c)return P.notfound();const ps=Object.values(PRODUCTS).filter(p=>p.cat===id);const brands=[...new Set(ps.map(p=>p.brand))];
+  return listing(ps,c.name,`Brands: ${brands.map(b=>`<a href="#brand-${b.toLowerCase()}">${b}</a>`).join(' · ')}`,crumb(esc(c.name)))};
+P.brand=b=>{const ps=Object.values(PRODUCTS).filter(p=>p.brand.toLowerCase()===b);if(!ps.length)return P.notfound();const name=ps[0].brand;
+  const ser=[...new Set(ps.map(p=>p.series))];
+  return listing(ps,name,`Product lines: ${ser.map(s=>`<a href="#series-${b}_${s.toLowerCase().replace(/\W+/g,'')}">${esc(s)}</a>`).join(' · ')}`,crumb(`<a href="#shop">Brands</a>`,esc(name)))};
+P.series=key=>{const [b,s]=key.split('_');const ps=Object.values(PRODUCTS).filter(p=>p.brand.toLowerCase()===b&&p.series.toLowerCase().replace(/\W+/g,'')===s);if(!ps.length)return P.notfound();
+  return listing(ps,`${ps[0].brand} ${ps[0].series}`,`${ps.length} model${ps.length>1?'s':''}, each with its own storage and colour variants.`,crumb(`<a href="#brand-${b}">${esc(ps[0].brand)}</a>`,esc(ps[0].series)))};
+P.search=()=>{const r=searchProducts(UI.q);return listing(r,UI.q?`Results for “${UI.q}”`:'Search',r.length?'':(UI.q?'No products matched. Check the spelling or try a brand name.':'Type in the search bar above.'),crumb('Search'))};
+
+/* ---------- product detail ---------- */
+function rating(pid){const r=S.reviews[pid]||[];return{n:r.length,avg:r.length?r.reduce((s,x)=>s+x.stars,0)/r.length:0}}
+const stars=n=>'★★★★★'.slice(0,Math.round(n))+'☆☆☆☆☆'.slice(0,5-Math.round(n));
+function deliveryEta(express){let d=new Date(TODAY),add=express?2:5,c=0;while(c<add){d=new Date(d.getTime()+864e5);if(d.getDay()!==0)c++}return d}
+P.product=id=>{
+  const p=PRODUCTS[id];if(!p)return P.notfound();
+  const sel=UI.sel[id]=UI.sel[id]||{o:cheapestOpt(p),c:0,v:0};
+  const oi=sel.o,ci=sel.c,sku=skuOf(id,oi,ci),st=stats(id,oi),fc=forecast(id,oi),stock=stockOf(sku),sp=specOf(p,oi),rt=rating(id),cat=CATS[p.cat];
+  const below=(st.first-st.cur)/st.first*100;
+  const similar=Object.values(PRODUCTS).filter(x=>x.cat===p.cat&&x.id!==id&&x.brand===p.brand).slice(0,4);
+  const alts=Object.values(PRODUCTS).filter(x=>x.cat===p.cat&&x.brand!==p.brand).sort((a,b)=>Math.abs(priceOf(a.id)-st.cur)-Math.abs(priceOf(b.id)-st.cur)).slice(0,4);
+  const myAlerts=S.alerts.filter(a=>a.user===S.session&&a.pid===id);
+  const purchased=S.session&&S.orders.some(o=>o.user===S.session&&o.items.some(i=>i.pid===id)&&o.payment.status!=='failed');
+  return`<div class="page">
+  <div class="crumbs">${crumb(`<a href="#cat-${p.cat}">${esc(cat.name)}</a>`,`<a href="#brand-${p.brand.toLowerCase()}">${esc(p.brand)}</a>`,`<a href="#series-${p.brand.toLowerCase()}_${p.series.toLowerCase().replace(/\W+/g,'')}">${esc(p.series)}</a>`,esc(p.title))}</div>
+  <div class="pdp">
+    <div class="gallery">
+      <div class="main" data-act="zoom" title="Click to zoom" role="img" aria-label="${esc(p.title)} in ${esc(p.cols[ci].v)}">${dev(p,ci,sel.v)}</div>
+      ${(()=>{const ims=imgsFor(p,ci),views=ims.length?ims.map((_,v)=>v):[0,1];return views.length>1?`<div class="thumbs">${views.map(v=>`<button class="${sel.v%views.length===v?'on':''}" data-act="view" data-v="${v}" aria-label="Photo ${v+1}">${dev(p,ci,v)}</button>`).join('')}</div>`:''})()}
+      ${imgsFor(p,ci).length?'':'<p class="small muted" style="margin-top:8px">Illustration. Photos appear here once the admin uploads them.</p>'}
+    </div>
+    <div class="buy">
+      <span class="eyebrow">${esc(p.brand)} · ${esc(p.series)}</span>
+      <h1 style="font-size:clamp(26px,3.2vw,38px);margin:6px 0 8px">${esc(p.title)}</h1>
+      <div class="small muted">SKU <span class="mono">${esc(sku.toUpperCase())}</span> · ${rt.n?`<span style="color:var(--gold)">${stars(rt.avg)}</span> ${rt.avg.toFixed(1)} (${rt.n} review${rt.n>1?'s':''})`:'No reviews yet'}</div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-top:16px;flex-wrap:wrap"><span class="price">${inr(st.cur)}</span>${below>=1?`<span class="chip good">${pct(below)} below first recorded price</span>`:''}</div>
+      <p class="small muted">Inclusive of GST. First recorded price ${inr(st.first)} on ${fmtD(st.firstDate)}.</p>
+      ${p.opts.length>1||p.opts[0].v!=='Standard'?`<div class="vgroup"><div class="eyebrow">${cat.vlabel}</div><div class="pills">${p.opts.map((o,i)=>`<button class="pill ${i===oi?'on':''}" data-act="opt" data-o="${i}" aria-pressed="${i===oi}">${esc(o.v)}<span class="mono small muted">${inr(priceOf(id,i))}</span></button>`).join('')}</div></div>`:''}
+      <div class="vgroup"><div class="eyebrow">Colour: <span style="color:var(--ink);text-transform:none;letter-spacing:0">${esc(p.cols[ci].v)}</span></div><div class="pills">${p.cols.map((c,i)=>`<button class="swatch ${i===ci?'on':''}" style="background:${c.hex}" data-act="col" data-c="${i}" aria-label="${esc(c.v)}${stockOf(skuOf(id,oi,i))?'':' (out of stock)'}" title="${esc(c.v)}"></button>`).join('')}</div></div>
+      <div class="vgroup" style="display:grid;gap:6px">${stockLabel(stock)}<span class="small">Delivery by <b>${fmtD(deliveryEta(false))}</b> (standard) or <b>${fmtD(deliveryEta(true))}</b> (express). Sold by <b>ShoppingMart Retail</b>.</span></div>
+      <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap"><button class="btn pri" data-act="addCart" data-id="${id}" data-sku="${sku}" ${stock?'':'disabled'} style="flex:1">Add to cart</button><button class="btn sec" data-act="buyNow" data-id="${id}" data-sku="${sku}" ${stock?'':'disabled'} style="flex:1">Buy now</button></div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn ghost sm" data-act="toggleWish" data-id="${id}">${wish().includes(id)?'♥ In wishlist':'♡ Add to wishlist'}</button><button class="btn ghost sm" data-act="toggleCmp" data-id="${id}">${S.compare.includes(id)?'✓ In comparison':'+ Compare'}</button><button class="btn ghost sm" data-act="alertForm" data-id="${id}" data-o="${oi}">Set price alert</button></div>
+      ${myAlerts.length?`<p class="small muted" style="margin-top:6px">You have ${myAlerts.length} alert${myAlerts.length>1?'s':''} on this product. <a href="#alerts">Manage</a></p>`:''}
+      <div class="vgroup"><div class="eyebrow">Key features</div><ul style="margin:6px 0 0;padding-left:18px">${p.feats.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>
+    </div>
+  </div>
+
+  ${p.desc?`<section class="sec"><div class="sech"><h2>Product description</h2></div><p style="max-width:72ch;white-space:pre-line">${esc(p.desc)}</p></section>`:''}
+  <section class="sec" id="history">${priceIntel(p,oi)}</section>
+
+  <section class="sec"><div class="sech"><div><h2>Specifications</h2><p>${esc(p.opts[oi].v!=='Standard'?p.opts[oi].v+' variant. ':'')}Sample specifications, to be verified against the manufacturer before launch.</p></div></div>
+    <dl class="specs">${cat.attrs.map(a=>{const v=sp[a.k];return`<div><dt>${esc(a.l)}</dt><dd>${v==null?'<span class="muted">Not published</span>':esc(a.fmt?a.fmt(v):v+(a.u||''))}</dd></div>`}).join('')}</dl></section>
+
+  <section class="sec"><div class="sech"><div><h2>Customer reviews</h2><p>${rt.n?`${rt.avg.toFixed(1)} out of 5 from ${rt.n} review${rt.n>1?'s':''}`:'No reviews yet. We never show invented ratings.'}</p></div></div>
+    <div style="display:grid;gap:12px">${(S.reviews[id]||[]).map(r=>`<div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(r.name)}</b><span style="color:var(--gold)">${stars(r.stars)}</span></div>${r.verified?'<span class="chip good" style="margin:6px 0">Verified purchase</span>':''}<p>${esc(r.text)}</p><p class="small muted">${fmtDT(r.at)}</p></div>`).join('')}
+    ${S.session?`<form class="panel form" data-form="review" data-id="${id}"><b>Write a review${purchased?'':' <span class="small muted">(not a verified purchase)</span>'}</b><label class="f">Rating<select class="in" id="rvStars" required><option value="">Choose</option>${[5,4,3,2,1].map(n=>`<option value="${n}">${n} star${n>1?'s':''}</option>`).join('')}</select></label><label class="f">Your review<textarea class="in" id="rvText" rows="3" required minlength="10" maxlength="800"></textarea></label><button class="btn pri" style="justify-self:start">Post review</button></form>`:`<p class="muted"><a href="#login">Sign in</a> to write a review.</p>`}</div></section>
+
+  ${similar.length?`<section class="sec"><div class="sech"><div><h2>More from ${esc(p.brand)}</h2></div></div>${grid(similar)}</section>`:''}
+  <section class="sec"><div class="sech"><div><h2>Alternatives from other brands</h2><p>Closest in price within ${esc(cat.name.toLowerCase())}.</p></div><button class="btn sec sm" data-act="demoCompare" data-ids="${[id,...alts.slice(0,2).map(a=>a.id)].join(',')}">Compare with these</button></div>${grid(alts)}</section>
+  </div>`;
+};
+
+/* ---------- price intelligence block ---------- */
+function priceIntel(p,oi){
+  const st=stats(p.id,oi),fc=forecast(p.id,oi),n=st.n,id=p.id;
+  const ranges=[[7,'7D'],[30,'30D'],[90,'90D'],[180,'6M'],[365,'1Y']];
+  let rg=UI.range;if(rg>n)rg=ranges.filter(r=>r[0]<=n).pop()?.[0]||n;
+  const ins=[];const d0=fmtD(TODAY);
+  if(st.m1!=null){const diff=st.m1-st.cur;ins.push(Math.abs(diff)<100?['var(--muted)',`The price is unchanged against ${fmtD(dayDate(-30))}.`]:[diff>0?'var(--good)':'var(--bad)',`The current price is ${inr(Math.abs(diff))} ${diff>0?'lower':'higher'} than the recorded price on ${fmtD(dayDate(-30))} (${diff>0?'down':'up'} ${pct(Math.abs(diff)/st.m1*100)} over 30 days, to ${d0}).`])}
+  if(n>=90){const gap=(st.cur-st.min90)/st.min90*100;ins.push(gap<=2?['var(--good)',`Near its lowest recorded price for ${fmtD(dayDate(-89))} – ${d0} (90-day low ${inr(st.min90)}).`]:['var(--muted)',`${pct(gap)} above the 90-day low of ${inr(st.min90)} (${fmtD(dayDate(-89))} – ${d0}).`])}
+  if(!fc.insufficient)ins.push(['var(--est)',`Estimated range over the next 30 days: ${inr(fc.endLo)} – ${inr(fc.endHi)}. Direction: ${fc.dir==='falling'?'may ease':fc.dir==='rising'?'may rise':'roughly stable'}.`]);
+  let advice;
+  if(fc.insufficient)advice='Insufficient price history for a reliable prediction.';
+  else if(n>=90&&st.cur<=st.min90*1.02)advice='Buying window: now looks reasonable. The price is at or near its 90-day low.';
+  else if(fc.dir==='falling')advice='Buying window: if you can wait, consider setting an alert. The estimate leans lower over the next 30 days.';
+  else if(fc.dir==='rising')advice='Buying window: the estimate leans higher. If you need it soon, waiting may not help.';
+  else advice='Buying window: no strong signal either way. A price alert is a low-effort way to catch a drop.';
+  return`<div class="sech"><div><h2>Price history &amp; prediction</h2><p>${esc(p.opts[oi].v!=='Standard'?p.opts[oi].v+' · ':'')}Seller: ShoppingMart Retail · Source: sample feed (development) · Updated ${fmtD(TODAY)}</p></div><div class="pills" role="group" aria-label="History range">${ranges.map(([d,l])=>`<button class="pill small ${rg===d?'on':''}" style="padding:5px 11px" data-act="range" data-d="${d}" ${d>n?'disabled title="Not enough history"':''} aria-pressed="${rg===d}">${l}</button>`).join('')}</div></div>
+  <div class="panel" style="display:grid;gap:20px">
+    <div class="pi">
+      <div><div class="k">Current</div><div class="v">${inr(st.cur)}</div></div>
+      <div><div class="k">1 week ago</div><div class="v">${st.w1!=null?inr(st.w1):'—'}</div></div>
+      <div><div class="k">1 month ago</div><div class="v">${st.m1!=null?inr(st.m1):'—'}</div></div>
+      <div><div class="k">Lowest recorded</div><div class="v" style="color:var(--good)">${inr(st.min)}</div></div>
+      <div><div class="k">Highest recorded</div><div class="v">${inr(st.max)}</div></div>
+      <div><div class="k">Average (${n} days)</div><div class="v">${inr(st.avg)}</div></div>
+      <div><div class="k">30-day estimate</div><div class="v" style="color:var(--est)">${fc.insufficient?'—':inr(fc.endLo)+' – '+inr(fc.endHi)}</div></div>
+      <div><div class="k">Confidence</div><div class="v" style="font-size:15px">${fc.insufficient?'Not available':fc.conf+` <span class="small muted">(backtest error ${pct(fc.mape)})</span>`}</div></div>
+    </div>
+    <div class="chartbox" id="chart" data-pid="${id}" data-o="${oi}" data-r="${rg}">${chart(st.h.slice(-rg),fc,rg)}<div class="tip" hidden></div></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap" class="small"><span><svg width="22" height="8"><path d="M0 4h22" stroke="var(--accent)" stroke-width="2.5"/></svg> Recorded price</span><span><svg width="22" height="8"><path d="M0 4h22" stroke="var(--est)" stroke-width="2" stroke-dasharray="4 3"/></svg> Estimate (not a recorded price)</span><span><svg width="12" height="12"><rect width="12" height="12" fill="var(--est)" opacity=".2"/></svg> Likely range</span></div>
+    <div class="insights">${ins.map(([c,t])=>`<div class="insight"><span class="dot" style="background:${c}"></span><span>${t}</span></div>`).join('')}<div class="insight" style="background:var(--accent-soft)"><span class="dot" style="background:var(--accent)"></span><b style="font-weight:600">${advice}</b></div></div>
+    <p class="disclaim">${fc.insufficient?`This product has ${n} days of recorded prices. Forecasts need at least 60 days, so none is shown.`:`Model: damped trend exponential smoothing on weekly prices, validated on the last 4 weeks held out in time order. Future prices are uncertain. This is an estimate, not a promise that the price will change.`} All prices on this demo are sample data.</p>
+    <div><button class="btn pri sm" data-act="alertForm" data-id="${id}" data-o="${oi}">Set a price alert</button></div>
+  </div>`;
+}
+function chart(h,fc,rg){
+  const W=760,H=300,L=64,R=fc.insufficient?16:110,T=16,B=34,n=h.length;
+  const showF=!fc.insufficient&&rg>=30;
+  const lo=Math.min(...h,showF?fc.lo:Infinity),hi=Math.max(...h,showF?fc.hi:-Infinity),pad=(hi-lo)*.12||hi*.02;
+  const y0=lo-pad,y1=hi+pad,iw=W-L-R,ih=H-T-B;
+  const futDays=showF?30:0,tot=n-1+futDays;
+  const X=i=>L+(tot?i/tot:0)*iw,Y=v=>T+(1-(v-y0)/(y1-y0))*ih;
+  const ticks=[];const step=niceStep((y1-y0)/4);for(let v=Math.ceil(y0/step)*step;v<=y1;v+=step)ticks.push(v);
+  const xt=[];const nx=Math.min(5,n);for(let k=0;k<nx;k++){const i=Math.round(k*(n-1)/Math.max(1,nx-1));xt.push(i)}
+  const d=h.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+  const mi=h.indexOf(Math.min(...h)),ma=h.indexOf(Math.max(...h));
+  let f='';
+  if(showF){const pts=[{off:0,mid:h[n-1],lo:h[n-1],hi:h[n-1]},...fc.pts];const FX=o=>X(n-1+o);
+    f=`<path d="${pts.map((p,i)=>(i?'L':'M')+FX(p.off).toFixed(1)+' '+Y(p.hi).toFixed(1)).join('')}${pts.slice().reverse().map(p=>'L'+FX(p.off).toFixed(1)+' '+Y(p.lo).toFixed(1)).join('')}Z" fill="var(--est)" opacity=".15"/><path d="${pts.map((p,i)=>(i?'L':'M')+FX(p.off).toFixed(1)+' '+Y(p.mid).toFixed(1)).join('')}" fill="none" stroke="var(--est)" stroke-width="2.2" stroke-dasharray="6 4"/><text x="${FX(30)+6}" y="${Y(fc.pts[4].mid)+4}" font-size="11" fill="var(--est)" font-family="JetBrains Mono,monospace">${inr(fc.pts[4].mid)}</text><text x="${FX(15)}" y="${T+12}" text-anchor="middle" font-size="11" fill="var(--est)" font-weight="600">ESTIMATE</text>`}
+  return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Recorded price over ${n} days${showF?' with a 30-day estimate':''}">
+    ${ticks.map(v=>`<line x1="${L}" x2="${W-R+(showF?0:0)}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace">${inr(v)}</text>`).join('')}
+    ${xt.map(i=>`<text x="${X(i)}" y="${H-12}" text-anchor="${i===0?'start':i===n-1?'end':'middle'}" font-size="11" fill="var(--muted)">${dayDate(-(n-1-i)).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</text>`).join('')}
+    ${showF?`<rect x="${X(n-1)}" y="${T}" width="${X(tot)-X(n-1)}" height="${ih}" fill="var(--est)" opacity=".05"/>`:''}
+    <path d="${d}L${X(n-1)} ${T+ih}L${X(0)} ${T+ih}Z" fill="var(--accent)" opacity=".09"/>
+    <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${f}
+    <line x1="${X(n-1)}" x2="${X(n-1)}" y1="${T}" y2="${T+ih}" stroke="var(--ink)" stroke-dasharray="2 3" opacity=".5"/>
+    <text x="${X(n-1)-4}" y="${T+ih-6}" text-anchor="end" font-size="11" fill="var(--ink)" font-weight="600">Today</text>
+    <circle cx="${X(mi)}" cy="${Y(h[mi])}" r="4" fill="var(--good)"/><text x="${Math.min(X(mi),W-R-60)}" y="${Y(h[mi])+18}" font-size="11" fill="var(--good)" font-family="JetBrains Mono,monospace">Low ${inr(h[mi])}</text>
+    <circle cx="${X(ma)}" cy="${Y(h[ma])}" r="4" fill="var(--bad)"/><text x="${Math.max(L+4,Math.min(X(ma),W-R-70))}" y="${Y(h[ma])-9}" font-size="11" fill="var(--bad)" font-family="JetBrains Mono,monospace">High ${inr(h[ma])}</text>
+    <circle cx="${X(n-1)}" cy="${Y(h[n-1])}" r="5.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>
+    <line class="hl" x1="0" x2="0" y1="${T}" y2="${T+ih}" stroke="var(--muted)" opacity="0"/><circle class="hd" r="5" fill="var(--accent)" opacity="0"/>
+    <rect class="hit" x="${L}" y="${T}" width="${X(n-1)-L}" height="${ih}" fill="transparent" data-l="${L}" data-iw="${iw}" data-tot="${tot}" data-t="${T}" data-ih="${ih}" data-y0="${y0}" data-y1="${y1}" data-w="${W}"/>
+  </svg>`;
+}
+function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r||1))),m=r/p;return(m<1.5?1:m<3?2:m<7?5:10)*p}
+function bindChart(){const box=$('#chart');if(!box)return;const svg=$('svg',box),hit=$('.hit',svg),tip=$('.tip',box);if(!hit)return;
+  const pid=box.dataset.pid,oi=+box.dataset.o,rg=+box.dataset.r;if(!PRODUCTS[pid]||!HIST[pid+'~'+oi])return;const h=series(pid,oi).slice(-rg),n=h.length,ds=hit.dataset;
+  const move=e=>{const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width*ds.w;let i=Math.round((sx-ds.l)/ds.iw*ds.tot);i=Math.max(0,Math.min(n-1,i));
+    const x=+ds.l+i/ds.tot*ds.iw,y=+ds.t+(1-(h[i]-ds.y0)/(ds.y1-ds.y0))*ds.ih;
+    $('.hl',svg).setAttribute('x1',x);$('.hl',svg).setAttribute('x2',x);$('.hl',svg).setAttribute('opacity',.6);$('.hd',svg).setAttribute('cx',x);$('.hd',svg).setAttribute('cy',y);$('.hd',svg).setAttribute('opacity',1);
+    tip.hidden=false;tip.style.left=(x/ds.w*r.width)+'px';tip.style.top=(y/300*r.height)+'px';tip.textContent=`${fmtD(dayDate(-(n-1-i)))} · ${inr(h[i])}`};
+  hit.addEventListener('pointermove',move);hit.addEventListener('pointerleave',()=>{tip.hidden=true;$('.hl',svg).setAttribute('opacity',0);$('.hd',svg).setAttribute('opacity',0)});}
+
+/* ---------- comparison engine ---------- */
+function scoreSet(ids,weights){
+  const ps=ids.map(i=>PRODUCTS[i]),cat=CATS[ps[0].cat];
+  const rows=ps.map(p=>{const oi=UI.sel[p.id]?.o??cheapestOpt(p);return{p,oi,sp:specOf(p,oi),price:priceOf(p.id,oi)}});
+  const norm={};
+  const num=(a,v)=>v==null?null:(a.num?a.num(v):+v);
+  for(const a of cat.attrs.filter(a=>a.g)){const vals=rows.map(r=>num(a,r.sp[a.k]));const ok=vals.filter(v=>v!=null);const mn=Math.min(...ok),mx=Math.max(...ok);
+    norm[a.k]=vals.map(v=>v==null?null:mx===mn?1:(a.dir>0?(v-mn)/(mx-mn):(mx-v)/(mx-mn)));}
+  const pmin=Math.min(...rows.map(r=>r.price)),pmax=Math.max(...rows.map(r=>r.price));
+  return rows.map((r,ri)=>{
+    const gs={},missing=[];
+    for(const g of Object.keys(cat.groups)){
+      if(g==='price'){gs.price=pmax===pmin?1:(pmax-r.price)/(pmax-pmin);continue}
+      const ks=cat.attrs.filter(a=>a.g===g).map(a=>a.k),vals=ks.map(k=>norm[k][ri]).filter(v=>v!=null);
+      if(ks.length&&!vals.length){missing.push(cat.groups[g]);gs[g]=null}else if(ks.length)gs[g]=vals.reduce((a,b)=>a+b,0)/vals.length;
+      ks.forEach(k=>{if(norm[k][ri]==null&&vals.length)missing.push(cat.attrs.find(a=>a.k===k).l)});
+    }
+    let tw=0,ts=0,contrib=[];
+    for(const [g,w] of Object.entries(weights)){if(!w||gs[g]==null)continue;tw+=w;ts+=w*gs[g];contrib.push({g,w,s:gs[g]})}
+    const total=tw?ts/tw*100:0;
+    let specW=0,specS=0;for(const [g,w] of Object.entries(weights)){if(g==='price'||!w||gs[g]==null)continue;specW+=w;specS+=w*gs[g]}
+    const value=(specW?specS/specW:0)/(r.price/pmin);
+    return{...r,gs,total,contrib,missing:[...new Set(missing)],value};
+  });
+}
+function bestValue(list){const out=[];for(const k of Object.keys(CATS)){const ids=list.filter(p=>p.cat===k).map(p=>p.id);if(ids.length<2)continue;scoreSet(ids,CATS[k].presets.overall.w).sort((a,b)=>b.value-a.value).slice(0,1).forEach(r=>out.push(r.p))}return out}
+function miniCompare(ids){ids=ids.filter(i=>PRODUCTS[i]&&PRODUCTS[i].cat==='smartphones');if(ids.length<2)return'<p class="muted">Add products to a comparison to see them ranked here.</p>';const sc=scoreSet(ids,CATS.smartphones.presets.overall.w).sort((a,b)=>b.total-a.total);return`<div style="display:grid;gap:12px">${sc.map((r,i)=>`<div style="display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center"><span style="width:44px;height:44px;background:var(--sunk);border-radius:10px;display:grid;place-items:center">${dev(r.p).replace('<svg','<svg width="34" height="34"')}</span><div style="min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b class="small">${esc(r.p.title)}${i===0?' <span class="chip acc">Top match</span>':''}</b><span class="mono small">${Math.round(r.total)}</span></div><div class="bar" style="margin-top:6px"><i style="width:${r.total}%"></i></div></div></div>`).join('')}<p class="small muted">Scored on “Best overall” weights. Battery capacity is not published for iPhone, so battery is left out of its score rather than guessed.</p></div>`}
+P.compare=()=>{
+  const ids=S.compare.filter(i=>PRODUCTS[i]);
+  if(ids.length<2)return`<div class="page"><div class="crumbs">${crumb('Compare')}</div><h1 style="font-size:clamp(26px,3.4vw,36px)">Compare products</h1>
+    <div class="panel empty" style="margin-top:18px"><h3>${ids.length?'Add one more product':'Pick at least two products'}</h3><p>Tick “Compare” on any product card, or start with a ready-made set.</p>
+    <div class="pills" style="justify-content:center;margin-top:16px">${[['iphone-17,galaxy-s25,pixel-10','Flagship phones'],['iphone-17-pro,galaxy-s25-ultra,oneplus-13','Pro phones'],['macbook-air-m4,lenovo-ideapad-slim-5,asus-tuf-a15','Laptops'],['sony-wh1000xm6,jbl-tune-770nc','Over-ear headphones'],['apple-watch-s11,galaxy-watch8,amazfit-active-2','Smartwatches']].map(([i,l])=>`<button class="pill" data-act="demoCompare" data-ids="${i}">${l}</button>`).join('')}</div>
+    ${ids.length?`<div style="margin-top:20px">${grid(ids.map(i=>PRODUCTS[i]))}</div>`:''}</div></div>`;
+  const cat=CATS[PRODUCTS[ids[0]].cat],ck=PRODUCTS[ids[0]].cat;
+  const pr=UI.prio[ck]||'overall';const w=UI.wts[ck]||{...cat.presets[pr].w};
+  for(const g of Object.keys(cat.groups))if(w[g]==null)w[g]=0;
+  const sc=scoreSet(ids,w),ranked=sc.slice().sort((a,b)=>b.total-a.total),top=ranked[0];
+  const cheapest=sc.slice().sort((a,b)=>a.price-b.price)[0];
+  const perfG=cat.groups.perf?'perf':cat.groups.graphics?'graphics':'battery';
+  const perfBest=sc.filter(r=>r.gs[perfG]!=null).sort((a,b)=>b.gs[perfG]-a.gs[perfG])[0];
+  const valBest=sc.slice().sort((a,b)=>b.value-a.value)[0];
+  const why=top.contrib.filter(c=>c.g!=='price').sort((a,b)=>b.w*b.s-a.w*a.s).slice(0,3).map(c=>cat.groups[c.g].toLowerCase());
+  const priceRank=sc.slice().sort((a,b)=>a.price-b.price).indexOf(top)+1;
+  const bestIdx=(key,fn)=>{const vals=sc.map(fn);const ok=vals.filter(v=>v!=null);if(!ok.length)return-1;const a=cat.attrs.find(x=>x.k===key);const t=a&&a.dir<0?Math.min(...ok):Math.max(...ok);return new Set(vals.map((v,i)=>v===t?i:-1).filter(i=>i>=0)).size===sc.length?-1:vals.indexOf(t)};
+  const tableRows=[
+    ['Price',sc.map(r=>`<span class="price">${inr(r.price)}</span><br><span class="small muted">${esc(r.p.opts[r.oi].v)}</span>`),sc.map(r=>r.price).indexOf(Math.min(...sc.map(r=>r.price)))],
+    ['Below first recorded',sc.map(r=>{const s=stats(r.p.id,r.oi);const d=(s.first-s.cur)/s.first*100;return d>=1?pct(d):'—'}),-1],
+    ...cat.attrs.map(a=>[a.l,sc.map(r=>{const v=r.sp[a.k];return v==null?'<span class="muted">Not published</span>':esc(a.fmt?a.fmt(v):v+(a.u||''))}),a.g?bestIdx(a.k,r=>r.sp[a.k]==null?null:(a.num?a.num(r.sp[a.k]):+r.sp[a.k])):-1]),
+    ['Rating',sc.map(r=>{const t=rating(r.p.id);return t.n?`${t.avg.toFixed(1)} ★ (${t.n})`:'<span class="muted">No reviews</span>'}),-1],
+    ['Availability',sc.map(r=>stockLabel(prodStock(r.p.id))),-1],
+    ['30-day price move',sc.map(r=>{const s=stats(r.p.id,r.oi);return s.m1==null?'—':(s.drop30>0?`<span style="color:var(--good)">▼ ${inr(s.drop30)}</span>`:s.drop30<0?`<span style="color:var(--bad)">▲ ${inr(-s.drop30)}</span>`:'No change')}),-1],
+    ['30-day estimate',sc.map(r=>trendChip(forecast(r.p.id,r.oi))),-1],
+  ];
+  const ckey=ids.slice().sort().join(',');
+  if(UI.lastCmp!==ckey){UI.lastCmp=ckey;ids.forEach(i=>S.cmpCount[i]=(S.cmpCount[i]||0)+1);const u=me();if(u){u.cmpHist=(u.cmpHist||[]).filter(h=>h.ids.slice().sort().join(',')!==ckey);u.cmpHist.unshift({ids,at:Date.now()});u.cmpHist=u.cmpHist.slice(0,10)}save()}
+  return`<div class="page"><div class="crumbs">${crumb('Compare')}</div>
+  <div class="sech"><div><h1 style="font-size:clamp(26px,3.4vw,36px)">Compare ${esc(cat.name.toLowerCase())}</h1><p>${sc.length} products side by side. Change the priority to re-rank.</p></div><button class="btn sec sm" data-act="clearCmp">Clear comparison</button></div>
+  <div class="panel" style="display:grid;gap:14px"><div class="eyebrow">What matters most to you?</div>
+   <div class="pills">${Object.entries(cat.presets).map(([k,v])=>`<button class="pill ${pr===k&&!UI.custom?.[ck]?'on':''}" data-act="prio" data-k="${k}" data-c="${ck}">${v.l}</button>`).join('')}</div>
+   <details ${UI.custom?.[ck]?'open':''}><summary style="cursor:pointer;font-weight:600;font-size:14px">Adjust weights yourself</summary><div class="weights" style="margin-top:12px">${Object.entries(cat.groups).map(([g,l])=>`<label>${l} <span class="mono muted">${w[g]||0}</span><input type="range" min="0" max="6" value="${w[g]||0}" data-act="wt" data-g="${g}" data-c="${ck}" id="wt-${g}"></label>`).join('')}</div></details>
+  </div>
+  <div class="winner" style="margin-top:18px">
+   <div style="background:var(--surface);border-radius:14px;aspect-ratio:1;display:grid;place-items:center;max-width:120px">${dev(top.p).replace('<svg','<svg width="80"')}</div>
+   <div><span class="chip acc">${esc(UI.custom?.[ck]?'Your custom weights':cat.presets[pr].l)}</span><h2 style="margin:8px 0 6px">Top match: ${esc(top.p.title)}</h2><p>Ranks first with a score of <b class="mono">${Math.round(top.total)}/100</b>${why.length?', mainly on '+why.join(', '):''}${w.price?`, and it is the ${priceRank===1?'lowest':priceRank===sc.length?'highest':'#'+priceRank+' lowest'}-priced option here`:''}.</p>${top.missing.length?`<p class="small muted" style="margin-top:6px">Not published for this product, so left out of its score: ${esc(top.missing.join(', '))}.</p>`:''}</div>
+   <a class="btn pri" href="#p-${top.p.id}">View product</a>
+  </div>
+  <div class="grid" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">${[['Lowest price',cheapest,inr(cheapest.price)],[cat.groups[perfG]==='Battery'?'Best battery':'Best '+cat.groups[perfG].toLowerCase(),perfBest,perfBest?'Top '+cat.groups[perfG].toLowerCase()+' score':''],['Best value',valBest,'Most spec per rupee']].filter(x=>x[1]).map(([l,r,s])=>`<a class="panel" href="#p-${r.p.id}" style="color:var(--ink)"><div class="eyebrow">${l}</div><b style="display:block;margin-top:4px">${esc(r.p.title)}</b><span class="small muted">${s}</span></a>`).join('')}</div>
+  <section class="sec" style="margin-top:28px"><h3 style="margin-bottom:12px">Score breakdown</h3><div class="cmp-wrap"><table class="cmp"><thead><tr><th>Criterion · weight</th>${ranked.map(r=>`<th>${esc(r.p.title)}</th>`).join('')}</tr></thead><tbody>
+    ${Object.entries(cat.groups).filter(([g])=>w[g]).map(([g,l])=>`<tr><td>${l} · ${w[g]}</td>${ranked.map(r=>`<td>${r.gs[g]==null?'<span class="muted small">Not published</span>':`<div class="bar"><i style="width:${Math.round(r.gs[g]*100)}%"></i></div><span class="mono small">${Math.round(r.gs[g]*100)}</span>`}</td>`).join('')}</tr>`).join('')}
+    <tr><td>Overall</td>${ranked.map((r,i)=>`<td class="${i===0?'best':''}"><span class="mono">${Math.round(r.total)}</span></td>`).join('')}</tr></tbody></table></div>
+    <p class="small muted" style="margin-top:8px">Each spec is scaled 0–100 within this comparison (best = 100). Group scores are averaged and weighted. ${esc(cat.perfNote)}</p></section>
+  <section class="sec" style="margin-top:28px"><h3 style="margin-bottom:12px">Side by side</h3><div class="cmp-wrap"><table class="cmp"><thead><tr><th></th>${sc.map(r=>`<th><div style="display:grid;gap:6px;min-width:150px"><span style="background:var(--sunk);border-radius:10px;display:grid;place-items:center;height:90px">${dev(r.p).replace('<svg','<svg height="74"')}</span><a href="#p-${r.p.id}">${esc(r.p.title)}</a><div style="display:flex;gap:6px"><button class="btn sm pri" data-act="addCart" data-id="${r.p.id}" ${prodStock(r.p.id)?'':'disabled'}>Add</button><button class="btn sm sec" data-act="toggleCmp" data-id="${r.p.id}" aria-label="Remove ${esc(r.p.title)}">Remove</button></div></div></th>`).join('')}</tr></thead>
+    <tbody>${tableRows.map(([l,cells,b])=>`<tr><td>${esc(l)}</td>${cells.map((c,i)=>`<td class="${i===b?'best':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="small muted" style="margin-top:8px">Highlighted cells are the best value in that row. Scroll sideways on small screens.</p></section>
+  </div>`;
+};
+
+/* ---------- trends ---------- */
+P.trends=()=>{const rows=Object.values(PRODUCTS).map(p=>{const oi=cheapestOpt(p);return{p,oi,st:stats(p.id,oi),fc:forecast(p.id,oi)}}).sort((a,b)=>b.st.drop30p-a.st.drop30p);
+  return`<div class="page"><div class="crumbs">${crumb('Price trends')}</div><div class="sech"><div><h1 style="font-size:clamp(26px,3.4vw,36px)">Price trends &amp; predictions</h1><p>Recorded prices over the last 90 days and a 30-day estimate for each product. Base variant shown; open a product for every variant.</p></div></div>
+  <div class="tbl"><table><thead><tr><th>Product</th><th>Current</th><th>30-day change</th><th>90 days</th><th>90-day low</th><th>30-day estimate</th><th></th></tr></thead><tbody>
+  ${rows.map(({p,oi,st,fc})=>`<tr><td><a href="#p-${p.id}"><b>${esc(p.title)}</b></a><br><span class="small muted">${esc(p.brand)} · ${esc(p.opts[oi].v)}</span></td><td class="price">${inr(st.cur)}</td><td class="mono">${st.m1==null?'<span class="muted">—</span>':st.drop30>0?`<span style="color:var(--good)">▼ ${pct(st.drop30p)}</span>`:st.drop30<0?`<span style="color:var(--bad)">▲ ${pct(-st.drop30p)}</span>`:'0%'}</td><td style="width:150px;min-width:130px">${st.n>=14?sparkline(st.h.slice(-90)):''}</td><td class="price">${st.n>=90?inr(st.min90):'<span class="muted small">—</span>'}</td><td>${fc.insufficient?'<span class="small muted">Insufficient history</span>':`<span class="mono small">${inr(fc.endLo)} – ${inr(fc.endHi)}</span><br>${trendChip(fc)}`}</td><td><button class="btn sm sec" data-act="alertForm" data-id="${p.id}" data-o="${oi}">Alert</button></td></tr>`).join('')}
+  </tbody></table></div><p class="disclaim" style="margin-top:14px">Sample price histories for the demo. Estimates use damped trend exponential smoothing with a time-ordered backtest; they are not guarantees.</p></div>`};
+
+/* ---------- alerts ---------- */
+function alertText(a){return a.type==='below'?`Below ${inr(a.target)}`:a.type==='pct'?`Drops ${a.pct}% from ${inr(a.basePrice)}`:a.type==='month'?`${inr(a.amount)} cheaper than on ${fmtD(new Date(a.refDate))} (${inr(a.refPrice)})`:'Hits its lowest price of the last 90 days'}
+function alertTarget(a){return a.type==='below'?a.target:a.type==='pct'?Math.round(a.basePrice*(1-a.pct/100)):a.type==='month'?a.refPrice-a.amount:null}
+P.alerts=()=>{
+  if(!S.session)return needLogin('Sign in to create and manage price alerts.');
+  const list=S.alerts.filter(a=>a.user===S.session);
+  return`<div class="page"><div class="crumbs">${crumb('Price alerts')}</div><div class="sech"><div><h1 style="font-size:clamp(26px,3.4vw,36px)">Price alerts &amp; watchlist</h1><p>Alerts are checked every time prices are recorded. You get an in-app notification${me().prefs?.email?' and an email':''} when one is met.</p></div><a class="btn sec sm" href="#notifications">Notifications</a></div>
+  ${list.length?`<div class="tbl"><table><thead><tr><th>Product</th><th>Condition</th><th>When set</th><th>Now</th><th>To target</th><th>Status</th><th>Actions</th></tr></thead><tbody>${list.map(a=>{const p=PRODUCTS[a.pid];if(!p)return'';const cur=priceOf(a.pid,a.oi),t=alertTarget(a),dist=t!=null?cur-t:null;const st=stats(a.pid,a.oi);
+    return`<tr><td><a href="#p-${a.pid}"><b>${esc(p.title)}</b></a><br><span class="small muted">${esc(p.opts[a.oi].v)}</span></td><td>${alertText(a)}${a.end?`<br><span class="small muted">Until ${fmtD(new Date(a.end))}</span>`:''}<br><span class="small muted">${a.freq==='every'?'Every new drop':'Once'}</span></td><td class="price">${inr(a.created)}<br><span class="small muted">${fmtD(new Date(a.at))}</span></td><td class="price">${inr(cur)}<br><span class="small" style="color:${st.drop30>0?'var(--good)':'var(--muted)'}">${st.m1==null?'':st.drop30>0?'▼ '+inr(st.drop30)+' / 30d':st.drop30<0?'▲ '+inr(-st.drop30)+' / 30d':'flat'}</span></td><td class="price">${dist==null?(cur<=st.min90?'At low':inr(cur-st.min90)+' above low'):dist<=0?'<span style="color:var(--good)">Reached</span>':inr(dist)}</td><td><span class="chip ${a.status==='active'?'acc':a.status==='triggered'?'good':''}">${a.status==='active'?'Watching':a.status==='triggered'?'Triggered':'Paused'}</span></td><td><div style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn sm sec" href="#p-${a.pid}">History</a><button class="btn sm sec" data-act="alertEdit" data-aid="${a.id}">Edit</button><button class="btn sm sec" data-act="alertPause" data-aid="${a.id}">${a.status==='paused'?'Resume':'Pause'}</button><button class="btn sm danger" data-act="alertDel" data-aid="${a.id}">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>`
+  :`<div class="panel empty"><h3>No alerts yet</h3><p>Open any product and choose “Set price alert”. Try one on a product whose estimate says it may ease.</p><a class="btn pri" style="margin-top:14px" href="#trends">Browse price trends</a></div>`}
+  <p class="small muted" style="margin-top:14px">In production a scheduled job checks new prices every few hours on the server, so alerts fire even with the site closed. In this demo, prices are recorded when the admin updates them or runs the price job.</p></div>`};
+function alertFormHTML(pid,oi,a){const p=PRODUCTS[pid],st=stats(pid,oi),cur=st.cur,t=a?.type||'below';
+  return`<h3>${a?'Edit':'Set'} price alert</h3><p class="small muted" style="margin:4px 0 14px">${esc(p.title)} · ${esc(p.opts[oi].v)} · now ${inr(cur)}</p>
+  <form class="form" data-form="alert" data-id="${pid}" data-o="${oi}" ${a?`data-aid="${a.id}"`:''}>
+   <div style="display:grid;gap:8px">
+    <label class="radio"><input type="radio" name="atype" value="below" ${t==='below'?'checked':''}><span style="flex:1"><b>Price falls below</b><input class="in" style="margin-top:6px" type="number" id="aTarget" min="1" value="${a?.target?Math.round(a.target/100):Math.round(cur*.95/10000)*100}" aria-label="Target price in rupees"></span></label>
+    <label class="radio"><input type="radio" name="atype" value="pct" ${t==='pct'?'checked':''}><span style="flex:1"><b>Price drops by a percentage</b><input class="in" style="margin-top:6px" type="number" id="aPct" min="1" max="90" value="${a?.pct||10}" aria-label="Percent drop"></span></label>
+    ${st.m1!=null?`<label class="radio"><input type="radio" name="atype" value="month" ${t==='month'?'checked':''}><span style="flex:1"><b>₹ cheaper than last month</b><span class="small muted" style="display:block">Compared with ${inr(st.m1)} on ${fmtD(dayDate(-30))}, same variant</span><input class="in" style="margin-top:6px" type="number" id="aAmt" min="100" value="${a?.amount?Math.round(a.amount/100):2000}" aria-label="Amount in rupees"></span></label>`:''}
+    ${st.n>=90?`<label class="radio"><input type="radio" name="atype" value="low90" ${t==='low90'?'checked':''}><span><b>Hits its 90-day low</b><span class="small muted" style="display:block">Currently ${inr(st.min90)}</span></span></label>`:''}
+   </div>
+   <div class="two"><label class="f">Frequency<select class="in" id="aFreq"><option value="once" ${a?.freq!=='every'?'selected':''}>Notify once</option><option value="every" ${a?.freq==='every'?'selected':''}>Every new lower price</option></select></label><label class="f">Ends (optional)<input class="in" type="date" id="aEnd" value="${a?.end?new Date(a.end).toISOString().slice(0,10):''}"></label></div>
+   <div class="note small">Channels: in-app notification. Email: ${me()?.prefs?.email?'on (provider not configured in this demo, so emails are queued, not sent)':'off'}. SMS and WhatsApp need a configured provider and your consent.</div>
+   <div class="err" id="aErr"></div>
+   <div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn sec" data-act="closeLayer">Cancel</button><button class="btn pri">${a?'Save alert':'Create alert'}</button></div>
+  </form>`}
+function evaluateAlerts(source){
+  let fired=0;const now=Date.now();
+  for(const a of S.alerts){if(a.status!=='active'||!PRODUCTS[a.pid])continue;if(a.end&&now>a.end+864e5){a.status='paused';continue}
+    const cur=priceOf(a.pid,a.oi),st=stats(a.pid,a.oi);let hit=false;
+    if(a.type==='below')hit=cur<=a.target;else if(a.type==='pct')hit=cur<=a.basePrice*(1-a.pct/100);else if(a.type==='month')hit=cur<=a.refPrice-a.amount;else if(a.type==='low90')hit=st.n>=90&&cur<=st.min90&&cur<a.created;
+    if(!hit)continue;if(a.lastFired!=null&&cur>=a.lastFired)continue; // de-duplicate the same price event
+    a.lastFired=cur;if(a.freq!=='every')a.status='triggered';fired++;
+    const p=PRODUCTS[a.pid],msg=`${p.title} (${p.opts[a.oi].v}) is now ${inr(cur)}. Your alert: ${alertText(a)}.`;
+    S.notifs.unshift({id:uid('n'),user:a.user,pid:a.pid,msg,at:now,read:false,source});
+    const u=S.users.find(x=>x.id===a.user);if(u?.prefs?.email)S.emailQueue.push({to:u.email,subject:'Price alert: '+p.title,at:now,status:'queued (no provider)'});
+  }
+  return fired;
+}
+P.notifications=()=>{if(!S.session)return needLogin('Sign in to see your notifications.');const list=S.notifs.filter(n=>n.user===S.session);
+  const html=`<div class="page"><div class="crumbs">${crumb('Notifications')}</div><div class="sech"><div><h1 style="font-size:clamp(26px,3.4vw,36px)">Notifications</h1><p>Price alerts and order updates.</p></div>${list.some(n=>!n.read)?`<button class="btn sec sm" data-act="readAll">Mark all as read</button>`:''}</div>
+  ${list.length?`<div style="display:grid;gap:10px">${list.map(n=>`<div class="panel" style="display:flex;gap:14px;align-items:start;${n.read?'':'border-color:var(--accent)'}"><span class="dot" style="width:9px;height:9px;border-radius:50%;margin-top:7px;flex:none;background:${n.read?'var(--line)':'var(--accent)'}"></span><div style="flex:1;min-width:0"><p>${esc(n.msg)}</p><p class="small muted">${fmtDT(n.at)}</p></div>${n.pid?`<a class="btn sm sec" href="#p-${n.pid}">View</a>`:n.oid?`<a class="btn sm sec" href="#o-${n.oid}">Order</a>`:''}</div>`).join('')}</div>`:`<div class="panel empty"><h3>No notifications</h3><p>Set a price alert and you will see it here when the price is met.</p></div>`}</div>`;
+  list.forEach(n=>n.read=true);save();setTimeout(chrome,0);return html};
+
+/* ---------- auth ---------- */
+const needLogin=msg=>`<div class="page auth"><div class="panel" style="text-align:center"><h2>Sign in needed</h2><p class="muted" style="margin:8px 0 16px">${msg}</p><a class="btn pri" href="#login">Sign in</a> <a class="btn sec" href="#register">Create account</a></div></div>`;
+P.login=()=>`<div class="page auth"><div class="panel"><h2>Sign in</h2><p class="muted" style="margin:4px 0 18px">Use your email or mobile number.</p>
+ <form class="form" data-form="login"><label class="f">Email or mobile<input class="in" id="lId" required autocomplete="username"></label><label class="f">Password<input class="in" id="lPw" type="password" required autocomplete="current-password"></label><div class="err" id="lErr"></div><button class="btn pri">Sign in</button></form>
+ <p class="small" style="margin-top:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><a href="#forgot">Forgot password?</a><a href="#register">Create an account</a></p>
+ <div class="note" style="margin-top:16px"><b>Demo accounts</b><br>Customer: <span class="mono">demo@shoppingmart.in</span> / <span class="mono">Demo@1234</span><br>Admin: <span class="mono">admin@shoppingmart.in</span> / <span class="mono">Admin@1234</span><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn sm sec" data-act="demoLogin" data-who="demo">Sign in as customer</button><button class="btn sm sec" data-act="demoLogin" data-who="admin">Sign in as admin</button></div></div></div></div>`;
+P.register=()=>`<div class="page auth"><div class="panel"><h2>Create your account</h2><p class="muted" style="margin:4px 0 18px">Track orders, save addresses and set price alerts.</p>
+ <form class="form" data-form="register"><label class="f">Full name<input class="in" id="rName" required minlength="2" autocomplete="name"></label><label class="f">Email<input class="in" id="rEmail" type="email" required autocomplete="email"></label><label class="f">Mobile number<input class="in" id="rMob" required pattern="[6-9][0-9]{9}" inputmode="numeric" placeholder="10-digit Indian mobile" autocomplete="tel"></label>
+ <div class="two"><label class="f">Password<input class="in" id="rPw" type="password" required minlength="8" autocomplete="new-password"></label><label class="f">Confirm password<input class="in" id="rPw2" type="password" required autocomplete="new-password"></label></div>
+ <p class="small muted">At least 8 characters with a letter and a number.</p><div class="err" id="rErr"></div><button class="btn pri">Create account</button></form>
+ <p class="small" style="margin-top:14px">Already have an account? <a href="#login">Sign in</a></p></div></div>`;
+P.forgot=()=>{const st=UI.reset||{};return`<div class="page auth"><div class="panel"><h2>Reset your password</h2>
+ ${!st.code?`<p class="muted" style="margin:4px 0 18px">We'll send a 6-digit code to your email.</p><form class="form" data-form="forgot"><label class="f">Email<input class="in" id="fEmail" type="email" required></label><div class="err" id="fErr"></div><button class="btn pri">Send code</button></form>`
+ :`<div class="note" style="margin:10px 0 16px"><b>Demo inbox.</b> No email provider is configured, so the code is shown here: <span class="mono" style="font-size:16px">${st.code}</span></div><form class="form" data-form="reset"><label class="f">Code<input class="in" id="fCode" required inputmode="numeric"></label><label class="f">New password<input class="in" id="fPw" type="password" required minlength="8"></label><div class="err" id="fErr"></div><button class="btn pri">Set new password</button></form>`}
+ <p class="small" style="margin-top:14px"><a href="#login">Back to sign in</a></p></div></div>`};
+
+/* ---------- account area ---------- */
+const acctNav=on=>`<nav class="side">${[['account','Overview'],['orders','My orders'],['addresses','Addresses'],['wishlist','Wishlist'],['alerts','Price alerts'],['notifications','Notifications'],['settings','Settings & security']].map(([k,l])=>`<a href="#${k}" class="${on===k?'on':''}">${l}</a>`).join('')}${me()?.role==='admin'?`<a href="#admin">Admin dashboard</a>`:''}<a href="#" data-act="logout">Sign out</a></nav>`;
+const acct=(on,body)=>S.session?`<div class="page"><div class="crumbs">${crumb('My account')}</div><div class="split">${acctNav(on)}<div style="min-width:0">${body}</div></div></div>`:needLogin('Sign in to view your account.');
+P.account=()=>{const u=me();if(!u)return needLogin('Sign in to view your account.');const os=S.orders.filter(o=>o.user===u.id);const act=os.filter(o=>!['Delivered','Cancelled','Refunded'].includes(o.status));
+  return acct('account',`<h1 style="font-size:clamp(24px,3vw,32px)">Hello, ${esc(u.name.split(' ')[0])}</h1><p class="muted">${esc(u.email)} · +91 ${esc(u.mobile)}</p>
+  <div class="kpis" style="margin-top:18px">${[['Orders',os.length,'#orders'],['In progress',act.length,'#orders'],['Wishlist',wish().length,'#wishlist'],['Active alerts',S.alerts.filter(a=>a.user===u.id&&a.status==='active').length,'#alerts']].map(([l,v,h])=>`<a class="kpi" href="${h}" style="color:var(--ink)"><span class="eyebrow">${l}</span><b>${v}</b></a>`).join('')}</div>
+  ${act.length?`<section class="sec" style="margin-top:28px"><h3 style="margin-bottom:10px">Current orders</h3>${orderList(act)}</section>`:''}
+  <section class="sec" style="margin-top:28px"><h3 style="margin-bottom:10px">Comparison history</h3>${(u.cmpHist||[]).length?`<div style="display:grid;gap:8px">${u.cmpHist.slice(0,5).map(h=>`<div class="panel" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px"><span>${h.ids.map(i=>esc(PRODUCTS[i]?.title||i)).join(' vs ')}<br><span class="small muted">${fmtDT(h.at)}</span></span><button class="btn sm sec" data-act="demoCompare" data-ids="${h.ids.join(',')}">Open</button></div>`).join('')}</div>`:'<p class="muted">Comparisons you open are saved here.</p>'}</section>
+  ${recent().length?`<section class="sec" style="margin-top:28px"><h3 style="margin-bottom:10px">Recently viewed</h3>${grid(recent().slice(0,3).map(i=>PRODUCTS[i]).filter(Boolean))}</section>`:''}`)};
+P.settings=()=>{const u=me();if(!u)return needLogin('Sign in to manage settings.');const pf=u.prefs||{};
+  return acct('settings',`<h2>Settings &amp; security</h2>
+  <form class="panel form" data-form="profile" style="margin-top:16px"><b>Profile</b><div class="two"><label class="f">Full name<input class="in" id="sName" value="${esc(u.name)}" required></label><label class="f">Mobile<input class="in" id="sMob" value="${esc(u.mobile)}" pattern="[6-9][0-9]{9}" required></label></div><label class="f">Email<input class="in" value="${esc(u.email)}" disabled></label><button class="btn pri" style="justify-self:start">Save profile</button></form>
+  <form class="panel form" data-form="prefs" style="margin-top:16px"><b>Notifications &amp; personalisation</b>
+   <label class="opt" style="display:flex;gap:8px"><input type="checkbox" checked disabled> In-app notifications (always on)</label>
+   <label class="opt" style="display:flex;gap:8px"><input type="checkbox" id="pEmail" ${pf.email?'checked':''}> Email me when a price alert is met</label>
+   <label class="opt" style="display:flex;gap:8px"><input type="checkbox" disabled> SMS / WhatsApp <span class="muted small">(needs a configured provider)</span></label>
+   <label class="opt" style="display:flex;gap:8px"><input type="checkbox" id="pPers" ${pf.personal!==false?'checked':''}> Use my browsing to personalise recommendations</label>
+   <button class="btn pri" style="justify-self:start">Save preferences</button></form>
+  <form class="panel form" data-form="password" style="margin-top:16px"><b>Change password</b><div class="two"><label class="f">Current password<input class="in" type="password" id="cOld" required></label><label class="f">New password<input class="in" type="password" id="cNew" required minlength="8"></label></div><div class="err" id="cErr"></div><button class="btn pri" style="justify-self:start">Update password</button></form>`)};
+P.addresses=()=>{if(!S.session)return needLogin('Sign in to manage addresses.');const list=S.addresses[S.session]||[];
+  return acct('addresses',`<div class="sech"><h2>Saved addresses</h2></div>${list.length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${list.map(a=>`<div class="panel"><b>${esc(a.name)}</b><p class="small" style="margin-top:4px">${esc(a.line)}<br>${esc(a.city)}, ${esc(a.state)} ${esc(a.pin)}<br>+91 ${esc(a.phone)}</p><button class="btn sm danger" style="margin-top:10px" data-act="delAddr" data-id="${a.id}">Remove</button></div>`).join('')}</div>`:'<p class="muted">No saved addresses yet.</p>'}
+  <form class="panel form" data-form="addr" style="margin-top:18px"><b>Add an address</b>${addrFields()}<button class="btn pri" style="justify-self:start">Save address</button></form>`)};
+const STATES=['Andhra Pradesh','Delhi','Gujarat','Karnataka','Kerala','Maharashtra','Tamil Nadu','Telangana','Uttar Pradesh','West Bengal','Other'];
+const addrFields=()=>`<div class="two"><label class="f">Full name<input class="in" id="adName" required value="${esc(me()?.name||'')}"></label><label class="f">Phone<input class="in" id="adPhone" required pattern="[6-9][0-9]{9}" value="${esc(me()?.mobile||'')}"></label></div><label class="f">House, street, area<input class="in" id="adLine" required minlength="6"></label><div class="two"><label class="f">City<input class="in" id="adCity" required></label><label class="f">PIN code<input class="in" id="adPin" required pattern="[1-9][0-9]{5}" inputmode="numeric"></label></div><label class="f">State<select class="in" id="adState" required>${STATES.map(s=>`<option>${s}</option>`).join('')}</select></label>`;
+P.wishlist=()=>{const ids=wish().filter(i=>PRODUCTS[i]);const body=`<div class="sech"><div><h2>Wishlist</h2><p>${ids.length} saved product${ids.length===1?'':'s'}${S.session?'':' in this browser. Sign in to keep them with your account'}.</p></div></div>${grid(ids.map(i=>PRODUCTS[i]),'Tap the heart on any product to save it here.')}`;
+  return S.session?acct('wishlist',body):`<div class="page"><div class="crumbs">${crumb('Wishlist')}</div>${body}</div>`};
+
+/* ---------- cart ---------- */
+const COUPONS={SMART500:{l:'₹500 off orders above ₹10,000',min:1000000,calc:s=>50000},FESTIVE5:{l:'5% off up to ₹2,000',min:0,calc:s=>Math.min(200000,Math.round(s*.05))}};
+function totals(items,coupon,express){
+  const lines=items.map(i=>{const pr=priceOf(i.pid,i.oi);return{...i,price:pr,line:pr*i.qty,stock:stockOf(i.sku)}});
+  const sub=lines.reduce((s,l)=>s+l.line,0);let disc=0,cErr='';
+  if(coupon){const c=COUPONS[coupon];if(!c)cErr='That code is not valid.';else if(sub<c.min)cErr=`Needs a subtotal of ${inr(c.min)}.`;else disc=c.calc(sub)}
+  const after=sub-disc,fee=express?14900:after>=99900||!after?0:4900,total=after+fee,gst=Math.round(total-total/1.18);
+  return{lines,sub,disc,cErr,fee,total,gst,bad:lines.some(l=>l.qty>l.stock)};
+}
+P.cart=()=>{const items=cart(),t=totals(items,UI.coupon,false);const saved=(S.saved[ukey()]||[]);
+  return`<div class="page"><div class="crumbs">${crumb('Cart')}</div><h1 style="font-size:clamp(26px,3.4vw,36px);margin-bottom:18px">Your cart</h1>
+  ${items.length?`<div class="split r"><div style="display:grid;gap:12px;align-content:start">${t.lines.map((l,ix)=>{const p=PRODUCTS[l.pid];return`<div class="panel" style="display:grid;grid-template-columns:84px 1fr;gap:14px"><a href="#p-${l.pid}" style="background:var(--sunk);border-radius:12px;display:grid;place-items:center;aspect-ratio:1">${dev(p,l.ci).replace('<svg','<svg width="60"')}</a><div style="display:grid;gap:6px;min-width:0"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><a href="#p-${l.pid}"><b>${esc(p.title)}</b></a><span class="price">${inr(l.line)}</span></div><span class="small muted">${esc(p.opts[l.oi].v!=='Standard'?p.opts[l.oi].v+' · ':'')}${esc(p.cols[l.ci].v)} · ${inr(l.price)} each</span>${l.qty>l.stock?`<span class="err">${l.stock?`Only ${l.stock} available. Lower the quantity to continue.`:'Out of stock. Remove it or save it for later.'}</span>`:stockLabel(l.stock)}
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden"><button class="btn sm" style="border-radius:0;background:var(--sunk)" data-act="qty" data-i="${ix}" data-d="-1" aria-label="Decrease quantity">−</button><span class="mono" style="padding:0 14px;display:grid;place-items:center" aria-live="polite">${l.qty}</span><button class="btn sm" style="border-radius:0;background:var(--sunk)" data-act="qty" data-i="${ix}" data-d="1" aria-label="Increase quantity" ${l.qty>=Math.min(5,l.stock)?'disabled':''}>+</button></div><button class="btn ghost sm" data-act="saveLater" data-i="${ix}">Save for later</button><button class="btn ghost sm" style="color:var(--bad)" data-act="rmCart" data-i="${ix}">Remove</button></div></div></div>`}).join('')}
+   ${saved.length?`<h3 style="margin-top:18px">Saved for later</h3>${saved.map((s,ix)=>{const p=PRODUCTS[s.pid];return p?`<div class="panel mini"><span class="th">${dev(p,s.ci)}</span><div style="flex:1;min-width:0"><b>${esc(p.title)}</b><br><span class="small muted">${esc(p.opts[s.oi].v)} · ${inr(priceOf(s.pid,s.oi))}</span></div><button class="btn sm sec" data-act="moveCart" data-i="${ix}">Move to cart</button></div>`:''}).join('')}`:''}</div>
+   <aside class="panel" style="align-self:start;position:sticky;top:130px">${summary(t)}
+    <form data-form="coupon" style="display:flex;gap:8px;margin-top:14px"><input class="in" id="cpn" placeholder="Coupon code" value="${esc(UI.coupon||'')}" aria-label="Coupon code" style="text-transform:uppercase"><button class="btn sec">Apply</button></form>${t.cErr?`<p class="err" style="margin-top:6px">${t.cErr}</p>`:UI.coupon?`<p class="small" style="color:var(--good);margin-top:6px">${COUPONS[UI.coupon].l} applied. <button class="btn ghost sm" data-act="rmCoupon">Remove</button></p>`:`<p class="small muted" style="margin-top:6px">Try SMART500 or FESTIVE5.</p>`}
+    <button class="btn pri" style="width:100%;margin-top:14px" data-act="go" data-to="checkout" ${t.bad?'disabled':''}>Proceed to checkout</button>${t.bad?'<p class="err" style="margin-top:6px">Fix the stock issues above first.</p>':''}</aside></div>`
+  :`<div class="panel empty"><h3>Your cart is empty</h3><p>Find something worth buying, at a price worth paying.</p><a class="btn pri" style="margin-top:14px" href="#shop">Start shopping</a></div>${saved.length?`<h3 style="margin:18px 0 10px">Saved for later</h3>${saved.map((s,ix)=>{const p=PRODUCTS[s.pid];return p?`<div class="panel mini" style="margin-bottom:8px"><span class="th">${dev(p,s.ci)}</span><div style="flex:1"><b>${esc(p.title)}</b></div><button class="btn sm sec" data-act="moveCart" data-i="${ix}">Move to cart</button></div>`:''}).join('')}`:''}`}</div>`};
+function summary(t,show=true){return`<h3 style="margin-bottom:10px">Order summary</h3><div class="sumrow"><span>Subtotal (${t.lines.reduce((s,l)=>s+l.qty,0)} items)</span><span class="price">${inr(t.sub)}</span></div>${t.disc?`<div class="sumrow" style="color:var(--good)"><span>Coupon discount</span><span class="price">−${inr(t.disc)}</span></div>`:''}<div class="sumrow"><span>Delivery</span><span class="price">${t.fee?inr(t.fee):'Free'}</span></div><div class="sumrow total"><span>Total</span><span class="price">${inr(t.total)}</span></div><p class="small muted">Includes GST of ${inr(t.gst)} (18%).${!t.fee?'':' Standard delivery is free on orders of ₹999 or more.'}</p>`}
+function cartDrawer(added){const t=totals(cart(),UI.coupon,false);
+  openLayer(`<div style="display:flex;justify-content:space-between;align-items:center"><h3>${added?'<span style="color:var(--accent)">✓</span> Added to cart':'Your cart'}</h3><button class="btn ghost" data-act="closeLayer" aria-label="Close">✕</button></div>
+  ${t.lines.length?t.lines.map(l=>{const p=PRODUCTS[l.pid];return`<div class="mini"><span class="th">${dev(p,l.ci)}</span><div style="flex:1;min-width:0"><b class="small">${esc(p.title)}</b><br><span class="small muted">${esc(p.cols[l.ci].v)} · Qty ${l.qty}</span></div><span class="price small">${inr(l.line)}</span></div>`}).join('')+`<div style="margin-top:auto;border-top:1px solid var(--line);padding-top:12px">${summary(t)}<div style="display:grid;gap:8px;margin-top:12px"><a class="btn pri" href="#checkout" data-act="closeLayer">Checkout</a><a class="btn sec" href="#cart" data-act="closeLayer">View cart</a></div></div>`:'<p class="muted">Nothing in your cart yet.</p>'}`,'drawer')}
+
+/* ---------- checkout ---------- */
+P.checkout=()=>{
+  if(!S.session)return`<div class="page auth"><div class="panel" style="text-align:center"><h2>Sign in to check out</h2><p class="muted" style="margin:8px 0 16px">Your cart moves to your account when you sign in, so order tracking and returns work.</p><a class="btn pri" href="#login" data-act="setReturn" data-to="checkout">Sign in</a> <a class="btn sec" href="#register" data-act="setReturn" data-to="checkout">Create account</a></div></div>`;
+  const items=cart();if(!items.length)return`<div class="page"><div class="panel empty"><h3>Nothing to check out</h3><a class="btn pri" href="#shop" style="margin-top:12px">Shop products</a></div></div>`;
+  const ck=UI.checkout,addrs=S.addresses[S.session]||[];if(ck.addr==null&&addrs.length)ck.addr=addrs[0].id;
+  const t=totals(items,UI.coupon,ck.ship==='express'),s=ck.step;
+  const stepNames=['Address','Delivery','Review','Payment'];
+  let body='';
+  if(s===1)body=`<h3>Delivery address</h3>${addrs.length?`<div style="display:grid;gap:8px;margin-top:12px">${addrs.map(a=>`<label class="radio"><input type="radio" name="addr" value="${a.id}" ${ck.addr===a.id?'checked':''} data-act="ckAddr"><span><b>${esc(a.name)}</b><br><span class="small">${esc(a.line)}, ${esc(a.city)}, ${esc(a.state)} ${esc(a.pin)} · +91 ${esc(a.phone)}</span></span></label>`).join('')}</div>`:''}
+    <details ${addrs.length?'':'open'} style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">Add a new address</summary><form class="form" data-form="addr" data-ck="1" style="margin-top:12px">${addrFields()}<button class="btn sec" style="justify-self:start">Save and use this address</button></form></details>
+    <div style="margin-top:18px"><button class="btn pri" data-act="ckNext" ${ck.addr?'':'disabled'}>Continue to delivery</button></div>`;
+  if(s===2)body=`<h3>Delivery speed</h3><div style="display:grid;gap:8px;margin-top:12px">
+    <label class="radio"><input type="radio" name="ship" value="standard" ${ck.ship!=='express'?'checked':''} data-act="ckShip"><span style="flex:1"><b>Standard</b> · ${t.sub-t.disc>=99900?'Free':'₹49'}<br><span class="small">Arrives by ${fmtD(deliveryEta(false))}</span></span></label>
+    <label class="radio"><input type="radio" name="ship" value="express" ${ck.ship==='express'?'checked':''} data-act="ckShip"><span style="flex:1"><b>Express</b> · ₹149<br><span class="small">Arrives by ${fmtD(deliveryEta(true))}</span></span></label></div>
+    <div style="margin-top:18px;display:flex;gap:10px"><button class="btn sec" data-act="ckBack">Back</button><button class="btn pri" data-act="ckNext">Review order</button></div>`;
+  if(s===3){const a=addrs.find(x=>x.id===ck.addr);body=`<h3>Review your order</h3><div style="display:grid;gap:10px;margin-top:12px">${t.lines.map(l=>{const p=PRODUCTS[l.pid];return`<div class="mini"><span class="th">${dev(p,l.ci)}</span><div style="flex:1;min-width:0"><b>${esc(p.title)}</b><br><span class="small muted">${esc(p.opts[l.oi].v)} · ${esc(p.cols[l.ci].v)} · Qty ${l.qty}</span>${l.qty>l.stock?`<br><span class="err">Only ${l.stock} left</span>`:''}</div><span class="price">${inr(l.line)}</span></div>`}).join('')}</div>
+    <div class="note" style="margin-top:14px"><b>Ship to</b> ${esc(a?.name)}, ${esc(a?.line)}, ${esc(a?.city)} ${esc(a?.pin)}<br><b>Delivery</b> ${ck.ship==='express'?'Express':'Standard'}, by ${fmtD(deliveryEta(ck.ship==='express'))}</div>
+    <form data-form="coupon" style="display:flex;gap:8px;margin-top:14px;max-width:360px"><input class="in" id="cpn" placeholder="Coupon code" value="${esc(UI.coupon||'')}" aria-label="Coupon code"><button class="btn sec">Apply</button></form>${t.cErr?`<p class="err">${t.cErr}</p>`:''}
+    <div style="margin-top:18px;display:flex;gap:10px"><button class="btn sec" data-act="ckBack">Back</button><button class="btn pri" data-act="ckNext" ${t.bad?'disabled':''}>Continue to payment</button></div>`}
+  if(s===4)body=`<h3>Payment method</h3><div style="display:grid;gap:8px;margin-top:12px">${[['upi','UPI','Any UPI app. You approve the payment in your app.'],['card','Credit or debit card','Visa, Mastercard, RuPay. Card details go to the gateway, never to ShoppingMart.'],['netbanking','Net banking','All major Indian banks'],['wallet','Wallets','Supported wallets through the gateway'],['cod','Cash on delivery','Pay when it arrives. Available for orders up to ₹50,000.']].map(([v,l,d])=>`<label class="radio"><input type="radio" name="pay" value="${v}" ${ck.pay===v?'checked':''} ${v==='cod'&&t.total>5000000?'disabled':''} data-act="ckPay"><span><b>${l}</b><br><span class="small">${d}</span></span></label>`).join('')}</div>
+    <div class="gw" style="margin-top:14px"><b>Test mode.</b> Online payments open the gateway's test checkout. No real money moves. Live payments switch on only after the admin adds verified Razorpay keys.</div>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn sec" data-act="ckBack">Back</button><button class="btn pri" data-act="placeOrder" ${ck.pay?'':'disabled'}>${ck.pay==='cod'?'Place order':'Pay '+inr(t.total)}</button></div>`;
+  return`<div class="page"><div class="crumbs">${crumb('<a href="#cart">Cart</a>','Checkout')}</div><h1 style="font-size:clamp(26px,3.4vw,36px);margin-bottom:14px">Checkout</h1>
+  <div class="steps">${stepNames.map((n,i)=>`<span class="${i+1===s?'on':i+1<s?'done':''}">${i+1}. ${n}</span>`).join('')}</div>
+  <div class="split r"><div class="panel">${body}</div><aside class="panel" style="align-self:start">${summary(t)}</aside></div></div>`;
+};
+function createOrder(){
+  const ck=UI.checkout,u=me(),a=(S.addresses[u.id]||[]).find(x=>x.id===ck.addr),t=totals(cart(),UI.coupon,ck.ship==='express');
+  // re-validate price and stock at placement time (server does this in production)
+  if(t.bad){toast('Some items no longer have enough stock. Check your cart.',false);location.hash='cart';return null}
+  const d=new Date(),id='SM'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+String(Math.floor(Math.random()*9000)+1000);
+  const o={id,user:u.id,created:Date.now(),items:t.lines.map(l=>({pid:l.pid,oi:l.oi,ci:l.ci,sku:l.sku,qty:l.qty,price:l.price,title:PRODUCTS[l.pid].title,variant:PRODUCTS[l.pid].opts[l.oi].v+' · '+PRODUCTS[l.pid].cols[l.ci].v})),address:a,ship:ck.ship||'standard',eta:deliveryEta(ck.ship==='express').getTime(),coupon:UI.coupon||null,sub:t.sub,disc:t.disc,fee:t.fee,gst:t.gst,total:t.total,
+    payment:{method:ck.pay,status:ck.pay==='cod'?'cod':'pending',attempts:[]},status:'Order Placed',timeline:[{s:'Order Placed',at:Date.now()}]};
+  S.orders.unshift(o);return o;
+}
+function reserve(o){if(o.reserved)return;o.items.forEach(i=>S.sold[i.sku]=(S.sold[i.sku]||0)+i.qty);o.reserved=true}
+function gateway(o){
+  const txn='pay_test_'+Math.random().toString(36).slice(2,12);
+  openLayer(`<div style="display:flex;justify-content:space-between;align-items:center"><span class="chip est">TEST MODE</span><span class="small muted">Payment gateway sandbox</span></div>
+  <h3 style="margin:14px 0 4px">Pay ${inr(o.total)}</h3><p class="small muted">Order ${o.id} · ${esc({upi:'UPI',card:'Card',netbanking:'Net banking',wallet:'Wallet'}[o.payment.method])}</p>
+  <div class="note" style="margin:14px 0">This sandbox stands in for Razorpay test checkout. In production, ShoppingMart marks an order paid only after the server verifies the gateway signature and webhook, never from this screen.</div>
+  <div style="display:grid;gap:8px"><button class="btn pri" data-act="gwResult" data-oid="${o.id}" data-r="success" data-txn="${txn}" autofocus>Simulate successful payment</button><button class="btn sec" data-act="gwResult" data-oid="${o.id}" data-r="fail" data-txn="${txn}">Simulate failed payment</button><button class="btn ghost" data-act="gwResult" data-oid="${o.id}" data-r="cancel" data-txn="${txn}">Cancel and go back</button></div>`);
+}
+function gwResult(oid,r,txn){
+  const o=S.orders.find(x=>x.id===oid);if(!o)return;closeLayer();
+  o.payment.attempts.push({txn,r,at:Date.now()});
+  if(o.payment.status==='paid'){toast('Payment already confirmed for this order.');location.hash='o-'+oid;return} // idempotent: duplicate callback ignored
+  if(r==='success'){o.payment.status='paid';o.payment.txn=txn;o.status='Payment Confirmed';o.timeline.push({s:'Payment Confirmed',at:Date.now()});reserve(o);finishOrder(o);}
+  else if(r==='fail'){o.payment.status='failed';o.status='Payment Failed';o.timeline.push({s:'Payment Failed',at:Date.now()});save();location.hash='o-'+oid;toast('Payment failed. You can retry from the order page.',false)}
+  else{o.payment.status='cancelled';o.status='Payment Pending';save();location.hash='o-'+oid;toast('Payment cancelled. Your order is saved; retry when ready.',false)}
+}
+function finishOrder(o){S.carts[S.session]=[];UI.coupon=null;UI.checkout={step:1};S.notifs.unshift({id:uid('n'),user:o.user,oid:o.id,msg:`Order ${o.id} confirmed. Total ${inr(o.total)}.`,at:Date.now(),read:false});save();location.hash='o-'+o.id;toast('Order placed')}
+
+/* ---------- orders ---------- */
+const FLOW=['Order Placed','Payment Confirmed','Processing','Packed','Shipped','Out for Delivery','Delivered'];
+const statusChip=s=>`<span class="chip ${s==='Delivered'?'good':/Failed|Cancelled/.test(s)?'bad':/Return|Refund|Pending/.test(s)?'drop':'acc'}">${esc(s)}</span>`;
+function orderList(list){return`<div style="display:grid;gap:10px">${list.map(o=>`<a class="panel" href="#o-${o.id}" style="color:var(--ink);display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span style="display:flex">${o.items.slice(0,3).map(i=>`<span style="width:46px;height:46px;background:var(--sunk);border-radius:10px;display:grid;place-items:center;margin-right:-8px;border:2px solid var(--surface)">${PRODUCTS[i.pid]?dev(PRODUCTS[i.pid],i.ci).replace('<svg','<svg width="34"'):''}</span>`).join('')}</span><div style="flex:1;min-width:180px;margin-left:10px"><b class="mono">${o.id}</b><br><span class="small muted">${fmtDT(o.created)} · ${o.items.reduce((s,i)=>s+i.qty,0)} item(s)</span></div><span class="price">${inr(o.total)}</span>${statusChip(o.status)}</a>`).join('')}</div>`}
+P.orders=()=>{if(!S.session)return needLogin('Sign in to see your orders.');const os=S.orders.filter(o=>o.user===S.session);return acct('orders',`<h2 style="margin-bottom:14px">My orders</h2>${os.length?orderList(os):`<div class="panel empty"><h3>No orders yet</h3><p>Orders you place will show here with live status.</p><a class="btn pri" href="#shop" style="margin-top:12px">Shop now</a></div>`}`)};
+P.order=id=>{const o=S.orders.find(x=>x.id===id);if(!o)return P.notfound();const u=me();if(!u||(o.user!==u.id&&u.role!=='admin'))return needLogin('Sign in with the account that placed this order.');
+  const fresh=Date.now()-o.created<120000&&(o.payment.status==='paid'||o.payment.status==='cod');
+  const idx=FLOW.indexOf(o.status),terminal=/Cancelled|Failed|Return|Refund|Pending/.test(o.status);
+  const canCancel=['Order Placed','Payment Confirmed','Processing'].includes(o.status);
+  const delivered=o.timeline.find(t=>t.s==='Delivered'),canReturn=o.status==='Delivered'&&Date.now()-delivered.at<7*864e5;
+  const pmLabel={upi:'UPI',card:'Card',netbanking:'Net banking',wallet:'Wallet',cod:'Cash on delivery'}[o.payment.method];
+  const payStatus={paid:'Paid',pending:'Awaiting payment',failed:'Failed',cancelled:'Not completed',cod:'Pay on delivery',refunded:'Refunded'}[o.payment.status];
+  return`<div class="page"><div class="crumbs">${crumb('<a href="#orders">My orders</a>',o.id)}</div>
+  ${fresh?`<div class="panel" style="border-color:var(--accent);background:var(--accent-soft);margin-bottom:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span style="width:44px;height:44px;border-radius:50%;background:var(--accent);display:grid;place-items:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span><div><h2>Thank you, your order is placed</h2><p class="muted">A confirmation is in your notifications. Estimated delivery ${fmtD(new Date(o.eta))}.</p></div></div>`:''}
+  <div class="sech"><div><h1 style="font-size:clamp(24px,3vw,32px)">Order <span class="mono">${o.id}</span></h1><p>Placed ${fmtDT(o.created)}</p></div>${statusChip(o.status)}</div>
+  <div class="split r"><div style="display:grid;gap:16px;align-content:start">
+   <div class="panel"><h3 style="margin-bottom:14px">Status</h3>${terminal&&idx<0?`<div class="insight" style="background:var(--bad-soft);margin-bottom:14px"><span>${esc(o.status)}.${o.payment.status==='failed'||o.payment.status==='cancelled'?' The payment did not go through and you have not been charged.':''}${o.refund?` Refund of ${inr(o.refund.amount)} ${o.refund.status}.`:''}</span></div>`:''}
+    <div class="timeline">${FLOW.map((s,i)=>{const t=o.timeline.find(x=>x.s===s);const done=!!t,now=s===o.status;return`<div class="tstep ${done?'done':''} ${now?'now':''}"><span class="c">${done?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="4"><path d="M5 12l5 5L20 7"/></svg>':''}</span><div><b style="${done?'':'color:var(--muted);font-weight:500'}">${s}</b>${t?`<br><span class="small muted">${fmtDT(t.at)}</span>`:''}${s==='Shipped'&&o.tracking?`<br><span class="small">Tracking: <span class="mono">${esc(o.tracking)}</span></span>`:''}</div></div>`}).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">${(o.payment.status==='failed'||o.payment.status==='cancelled')&&o.status!=='Cancelled'?`<button class="btn pri sm" data-act="retryPay" data-oid="${o.id}">Retry payment</button>`:''}${canCancel?`<button class="btn danger sm" data-act="cancelOrder" data-oid="${o.id}">Cancel order</button>`:''}${canReturn?`<button class="btn sec sm" data-act="returnOrder" data-oid="${o.id}">Request return</button>`:''}</div>
+    ${!canCancel&&!canReturn&&!terminal&&o.status!=='Delivered'?'<p class="small muted" style="margin-top:8px">Orders can be cancelled until they are packed.</p>':''}</div>
+   <div class="panel"><h3 style="margin-bottom:12px">Items</h3><div style="display:grid;gap:10px">${o.items.map(i=>{const p=PRODUCTS[i.pid];return`<div class="mini"><span class="th">${p?dev(p,i.ci):''}</span><div style="flex:1;min-width:0"><a href="#p-${i.pid}"><b>${esc(i.title)}</b></a><br><span class="small muted">${esc(i.variant)} · Qty ${i.qty} · ${inr(i.price)} each</span></div><span class="price">${inr(i.price*i.qty)}</span></div>`}).join('')}</div></div></div>
+   <aside style="display:grid;gap:16px;align-content:start"><div class="panel"><h3 style="margin-bottom:8px">Payment</h3><div class="sumrow"><span>Method</span><span>${pmLabel}</span></div><div class="sumrow"><span>Status</span><span>${payStatus}</span></div>${o.payment.txn?`<div class="sumrow"><span>Transaction</span><span class="mono small">${o.payment.txn}</span></div>`:''}<div class="sumrow"><span>Subtotal</span><span class="price">${inr(o.sub)}</span></div>${o.disc?`<div class="sumrow"><span>Discount (${esc(o.coupon)})</span><span class="price">−${inr(o.disc)}</span></div>`:''}<div class="sumrow"><span>Delivery (${o.ship})</span><span class="price">${o.fee?inr(o.fee):'Free'}</span></div><div class="sumrow total"><span>${o.payment.status==='paid'?'Total paid':'Total payable'}</span><span class="price">${inr(o.total)}</span></div><p class="small muted">Includes GST ${inr(o.gst)}</p>${o.payment.status==='paid'||o.payment.status==='cod'?`<button class="btn sec sm" style="margin-top:10px" data-act="invoice" data-oid="${o.id}">View invoice</button>`:''}</div>
+   <div class="panel"><h3 style="margin-bottom:8px">Shipping to</h3><p class="small">${esc(o.address.name)}<br>${esc(o.address.line)}<br>${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.pin)}<br>+91 ${esc(o.address.phone)}</p><p class="small" style="margin-top:8px">Estimated delivery <b>${fmtD(new Date(o.eta))}</b></p></div>
+   <div class="panel small">Questions about this order? <a href="#contact">Contact support</a> and quote <span class="mono">${o.id}</span>.</div></aside></div></div>`};
+function invoice(o){openLayer(`<div style="display:flex;justify-content:space-between"><div><b>ShoppingMart Retail</b><br><span class="small muted">Tax invoice · ${o.id}</span></div><button class="btn ghost" data-act="closeLayer" aria-label="Close">✕</button></div><p class="small" style="margin:12px 0">Billed to ${esc(o.address.name)}, ${esc(o.address.city)} · ${fmtD(new Date(o.created))}</p><table><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${esc(i.title)}<br><span class="small muted">${esc(i.variant)}</span></td><td>${i.qty}</td><td class="price">${inr(i.price*i.qty)}</td></tr>`).join('')}</tbody></table><div style="margin-top:10px">${o.disc?`<div class="sumrow"><span>Discount</span><span class="price">−${inr(o.disc)}</span></div>`:''}<div class="sumrow"><span>Delivery</span><span class="price">${inr(o.fee)}</span></div><div class="sumrow"><span>Taxable value</span><span class="price">${inr(o.total-o.gst)}</span></div><div class="sumrow"><span>${o.address.state==='Andhra Pradesh'?'CGST 9% + SGST 9%':'IGST 18%'}</span><span class="price">${inr(o.gst)}</span></div><div class="sumrow total"><span>Total</span><span class="price">${inr(o.total)}</span></div></div><p class="small muted" style="margin-top:10px">Sample invoice. GSTIN and invoice numbering come from the seller's settings in production.</p>`)}
+
+/* ---------- admin ---------- */
+P.admin=()=>{const u=me();if(!u)return needLogin('Sign in with an admin account.');if(u.role!=='admin')return`<div class="page auth"><div class="panel"><h2>Admins only</h2><p class="muted" style="margin-top:8px">Your account does not have admin access. Sign in with the admin demo account to explore the dashboard.</p></div></div>`;
+  const tab=UI.adminTab,tabs=[['overview','Overview'],['orders','Orders'],['customers','Customers']];
+  let body='';
+  if(tab==='overview'){const paid=S.orders.filter(o=>o.payment.status==='paid'||o.payment.status==='cod'),rev=paid.reduce((s,o)=>s+o.total,0);
+    const best={};paid.forEach(o=>o.items.forEach(i=>best[i.pid]=(best[i.pid]||0)+i.qty));const bests=Object.entries(best).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const catRev={};paid.forEach(o=>o.items.forEach(i=>{const c=PRODUCTS[i.pid]?.cat;if(c)catRev[c]=(catRev[c]||0)+i.price*i.qty}));
+    const low=[];Object.values(PRODUCTS).forEach(p=>p.opts.forEach((o,oi)=>p.cols.forEach((c,ci)=>{const s=stockOf(skuOf(p.id,oi,ci));if(s<3)low.push([p,o.v,c.v,s])})));
+    const carts=Object.entries(S.carts).filter(([k,v])=>k!=='guest'&&v.length).length;
+    const trig=S.alerts.filter(a=>a.lastFired!=null).length,conv=S.alerts.filter(a=>a.lastFired!=null&&S.orders.some(o=>o.user===a.user&&o.items.some(i=>i.pid===a.pid)&&o.created>a.at)).length;
+    body=`<p class="note small" style="margin-bottom:14px">Figures come from orders and activity recorded in this browser. Development data, not production analytics.</p>
+    <div class="kpis">${[['Orders',S.orders.length],['Revenue (paid + COD)',inr(rev)],['Avg order value',paid.length?inr(rev/paid.length):'—'],['Carts with items',carts],['Active alerts',S.alerts.filter(a=>a.status==='active').length],['Alerts → purchase',trig?`${conv} of ${trig}`:'—']].map(([l,v])=>`<div class="kpi"><span class="eyebrow">${l}</span><b>${v}</b></div>`).join('')}</div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:18px">
+     <div class="panel"><h3 style="margin-bottom:10px">Best sellers</h3>${bests.length?bests.map(([pid,q])=>`<div class="sumrow"><span>${esc(PRODUCTS[pid]?.title||pid)}</span><span class="mono">${q} sold</span></div>`).join(''):'<p class="muted small">No paid orders yet.</p>'}</div>
+     <div class="panel"><h3 style="margin-bottom:10px">Revenue by category</h3>${Object.keys(catRev).length?Object.entries(catRev).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="sumrow"><span>${esc(CATS[c].name)}</span><span class="price">${inr(v)}</span></div>`).join(''):'<p class="muted small">No paid orders yet.</p>'}</div>
+     <div class="panel"><h3 style="margin-bottom:10px">Most compared</h3>${Object.keys(S.cmpCount).length?Object.entries(S.cmpCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([p,n])=>`<div class="sumrow"><span>${esc(PRODUCTS[p]?.title||p)}</span><span class="mono">${n}</span></div>`).join(''):'<p class="muted small">No comparisons yet.</p>'}</div>
+     <div class="panel"><h3 style="margin-bottom:10px">Low stock (under 3)</h3><div style="max-height:220px;overflow:auto">${low.slice(0,30).map(([p,v,c,s])=>`<div class="sumrow small"><span>${esc(p.title)} · ${esc(v)} · ${esc(c)}</span><span class="mono" style="color:${s?'var(--gold)':'var(--bad)'}">${s}</span></div>`).join('')}</div></div></div>`}
+  if(tab==='products'){const q=(UI.adminQ||'').toLowerCase();const ps=Object.values(PRODUCTS).filter(p=>!q||p.title.toLowerCase().includes(q)||p.brand.toLowerCase().includes(q));
+    body=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><input class="in" style="max-width:280px" id="adminQ" placeholder="Filter products" value="${esc(UI.adminQ||'')}" data-act="adminQ"><button class="btn sec sm" data-act="exportCsv">Export catalog CSV</button></div>
+    <div class="tbl"><table><thead><tr><th>Product</th><th>Variant</th><th>Price today</th><th>Update price (₹)</th><th>Stock by colour</th></tr></thead><tbody>${ps.flatMap(p=>p.opts.map((o,oi)=>`<tr><td>${oi===0?`<a href="#p-${p.id}"><b>${esc(p.title)}</b></a><br><span class="small muted">${esc(p.brand)} · ${esc(CATS[p.cat].name)}</span>`:''}</td><td>${esc(o.v)}</td><td class="price">${inr(priceOf(p.id,oi))}</td><td><form data-form="setPrice" data-id="${p.id}" data-o="${oi}" style="display:flex;gap:6px"><input class="in" style="width:110px;height:34px" type="number" min="1" id="sp-${p.id}-${oi}" placeholder="${Math.round(priceOf(p.id,oi)/100)}" aria-label="New price for ${esc(p.title)} ${esc(o.v)}"><button class="btn sm sec">Record</button></form></td><td><div style="display:flex;gap:6px;flex-wrap:wrap">${p.cols.map((c,ci)=>`<label class="small" style="display:flex;gap:4px;align-items:center" title="${esc(c.v)}"><span class="swatch" style="width:14px;height:14px;background:${c.hex};cursor:default"></span><input class="in mono" style="width:58px;height:30px;padding:0 6px" type="number" min="0" value="${stockOf(skuOf(p.id,oi,ci))}" data-act="setStock" data-sku="${skuOf(p.id,oi,ci)}" id="st-${skuOf(p.id,oi,ci)}" aria-label="Stock ${esc(c.v)}"></label>`).join('')}</div></td></tr>`)).join('')}</tbody></table></div>
+    <form class="panel form" data-form="addProduct" style="margin-top:18px"><b>Add a product</b><div class="two"><label class="f">Title<input class="in" id="npTitle" required></label><label class="f">Brand<input class="in" id="npBrand" required></label></div><div class="two"><label class="f">Product line<input class="in" id="npSeries" required placeholder="e.g. Galaxy S"></label><label class="f">Category<select class="in" id="npCat">${Object.entries(CATS).map(([k,c])=>`<option value="${k}">${c.name}</option>`).join('')}</select></label></div><div class="two"><label class="f">Price (₹)<input class="in" id="npPrice" type="number" min="100" required></label><label class="f">Colour name<input class="in" id="npCol" value="Black" required></label></div><label class="f">Key feature<input class="in" id="npFeat" required></label><p class="small muted">New products start with no price history, so they show “Insufficient price history” until 60 days are recorded.</p><button class="btn pri" style="justify-self:start">Add product</button></form>`}
+  if(tab==='orders'){body=S.orders.length?`<div class="tbl"><table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody>${S.orders.map(o=>{const cu=S.users.find(x=>x.id===o.user);const i=FLOW.indexOf(o.status);let next=i>=0&&i<FLOW.length-1&&(o.payment.status==='paid'||o.payment.status==='cod'||i>0)?FLOW[i+1]:null;if(next==='Payment Confirmed'&&o.payment.status==='cod')next='Processing';
+    return`<tr><td><a href="#o-${o.id}" class="mono">${o.id}</a><br><span class="small muted">${fmtDT(o.created)}</span></td><td>${esc(cu?.name||'—')}<br><span class="small muted">${esc(o.address.city)} ${esc(o.address.pin)}</span></td><td class="price">${inr(o.total)}</td><td>${esc(o.payment.method.toUpperCase())}<br><span class="small muted">${esc(o.payment.status)}</span></td><td>${statusChip(o.status)}</td><td><div style="display:flex;gap:6px;flex-wrap:wrap">${next?`<button class="btn sm pri" data-act="advance" data-oid="${o.id}">Mark ${next}</button>`:''}${o.status==='Return Requested'?`<button class="btn sm sec" data-act="refund" data-oid="${o.id}">Approve return &amp; refund</button>`:''}</div></td></tr>`}).join('')}</tbody></table></div><p class="small muted" style="margin-top:8px">Marking “Shipped” assigns a sample tracking number. Each change notifies the customer.</p>`:`<div class="panel empty"><h3>No orders yet</h3><p>Place a test order as the customer account to see it here.</p></div>`}
+  if(tab==='prices'){const active=S.alerts.filter(a=>a.status==='active');body=`<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    <div class="panel"><h3>Price ingestion</h3><p class="small muted" style="margin:6px 0 12px">Source: sample feed (development). Live competitor prices are not collected. Connect an authorised API or upload a verified CSV to go live.</p><button class="btn pri" data-act="runJob">Run price job now</button><p class="small muted" style="margin-top:8px">Records new prices for a few products, then evaluates every active alert.</p></div>
+    <div class="panel"><h3>Import verified prices</h3><p class="small muted" style="margin:6px 0 12px">CSV columns: product_id, variant_index, price_inr</p><form data-form="csv" class="form"><textarea class="in mono small" id="csvIn" rows="4" placeholder="galaxy-s25,0,74999"></textarea><button class="btn sec" style="justify-self:start">Import</button></form></div>
+    <div class="panel"><h3>Forecast model</h3><div class="sumrow small"><span>Method</span><span>Damped Holt (weekly)</span></div><div class="sumrow small"><span>Validation</span><span>Last 4 weeks held out</span></div><div class="sumrow small"><span>Median backtest error</span><span class="mono">${(()=>{const e=Object.values(PRODUCTS).map(p=>forecast(p.id,0)).filter(f=>!f.insufficient).map(f=>f.mape).sort((a,b)=>a-b);return e.length?pct(e[Math.floor(e.length/2)]):'—'})()}</span></div><div class="sumrow small"><span>Products without enough history</span><span class="mono">${Object.values(PRODUCTS).filter(p=>forecast(p.id,0).insufficient).length}</span></div></div></div>
+    <h3 style="margin:22px 0 10px">Job runs</h3>${S.jobs.length?`<div class="tbl"><table><thead><tr><th>When</th><th>Job</th><th>Prices recorded</th><th>Alerts fired</th><th>Status</th></tr></thead><tbody>${S.jobs.slice(0,10).map(j=>`<tr><td>${fmtDT(j.at)}</td><td>${esc(j.kind)}</td><td class="mono">${j.n}</td><td class="mono">${j.fired}</td><td><span class="chip ${j.ok?'good':'bad'}">${j.ok?'Succeeded':'Failed'}</span>${j.err?`<br><span class="small">${esc(j.err)}</span>`:''}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">No jobs run yet.</p>'}
+    <h3 style="margin:22px 0 10px">Active alerts (${active.length})</h3>${active.length?`<div class="tbl"><table><thead><tr><th>Product</th><th>Condition</th><th>Now</th></tr></thead><tbody>${active.map(a=>`<tr><td>${esc(PRODUCTS[a.pid]?.title)}</td><td>${alertText(a)}</td><td class="price">${inr(priceOf(a.pid,a.oi))}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">No active alerts.</p>'}
+    <h3 style="margin:22px 0 10px">Email notifications</h3><p class="muted small">${S.emailQueue.length} queued. No email provider configured, so nothing is sent.</p>`}
+  if(tab==='customers'){body=`<div class="tbl"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Orders</th><th>Joined</th></tr></thead><tbody>${S.users.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.role)}</td><td class="mono">${S.orders.filter(o=>o.user===x.id).length}</td><td>${fmtD(new Date(x.at))}</td></tr>`).join('')}</tbody></table></div><p class="small muted" style="margin-top:8px">Payment credentials are never stored, so they never appear here.</p>`}
+  return`<div class="page"><div class="crumbs">${crumb('Admin')}</div><div class="sech"><div><span class="eyebrow">Store admin</span><h1 style="font-size:clamp(26px,3.4vw,36px)">Dashboard</h1></div><span class="chip est">Development data</span></div>
+  <div class="panel" style="display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px;border-color:var(--accent)"><div><b>Products, photos, prices and stock</b><p class="small muted">Managed in the Firebase admin panel. Changes appear on the live store within seconds.</p></div><a class="btn pri" href="admin.html">Open admin panel</a></div>
+  <div class="pills" style="margin-bottom:18px" role="tablist">${tabs.map(([k,l])=>`<button class="pill ${tab===k?'on':''}" role="tab" aria-selected="${tab===k}" data-act="adminTab" data-t="${k}">${l}</button>`).join('')}</div>${body}
+  <p class="small muted" style="margin-top:24px">This demo checks the admin role in the browser. The production build enforces roles on the server for every request.</p></div>`};
+
+/* ---------- info pages ---------- */
+P.help=()=>`<div class="page"><div class="crumbs">${crumb('Help')}</div><h1 style="font-size:clamp(26px,3.4vw,36px)">Support &amp; FAQ</h1><div class="prose" style="margin-top:18px">
+ ${[['How does this store work?','Products, photos, prices and stock come from the Firebase database and update live when the admin changes them. Price history before the first recorded admin price is sample data. Accounts, carts, orders and alerts are still saved in your browser for now, and payments run against a test-mode sandbox, so no money moves.'],['Where do prices come from?','In production, from the seller\'s own price updates, authorised partner APIs or verified CSV imports. Each record keeps its source, timestamp and seller. We do not scrape other stores.'],['How reliable are price predictions?','They are estimates from past prices, shown as a range with a confidence level and the model\'s backtest error. Products with less than 60 days of history get no forecast.'],['How are comparison winners chosen?','Each published spec is scaled within the products you compare, grouped (camera, battery and so on) and weighted by the priority you pick. Missing specs are left out, not guessed.'],['When can I cancel an order?','Until it is packed. After delivery you can request a return within 7 days.'],['Which payment methods work?','UPI, credit and debit cards, net banking, wallets and cash on delivery for orders up to ₹50,000.']].map(([q,a])=>`<details class="panel"><summary style="cursor:pointer;font-weight:600">${q}</summary><p style="margin-top:10px" class="muted">${a}</p></details>`).join('')}</div></div>`;
+P.about=()=>`<div class="page"><div class="crumbs">${crumb('About')}</div><div class="prose"><h1 style="font-size:clamp(26px,3.4vw,36px)">About ShoppingMart</h1><p>ShoppingMart is an Indian electronics store built around one idea: you should see the price history and a fair comparison before you pay.</p><p>Every product page shows recorded prices, the lowest and highest we have seen, and an estimate of where the price may go. The comparison tool ranks products by what matters to you and explains why.</p></div></div>`;
+P.contact=()=>`<div class="page"><div class="crumbs">${crumb('Contact')}</div><div class="split r"><div class="prose"><h1 style="font-size:clamp(26px,3.4vw,36px)">Contact us</h1><p>We reply within one working day.</p><form class="panel form" data-form="contact"><div class="two"><label class="f">Name<input class="in" id="ctName" required></label><label class="f">Email<input class="in" id="ctEmail" type="email" required></label></div><label class="f">Order number (optional)<input class="in" id="ctOrder" placeholder="SM…"></label><label class="f">Message<textarea class="in" id="ctMsg" rows="4" required minlength="10"></textarea></label><button class="btn pri" style="justify-self:start">Send message</button></form></div><aside class="panel" style="align-self:start"><h3>Other ways to reach us</h3><p class="small" style="margin-top:8px">Email: <span class="mono">support@shoppingmart.example</span><br>Hours: Mon–Sat, 9 am – 7 pm IST</p></aside></div></div>`;
+P.policies=()=>`<div class="page"><div class="crumbs">${crumb('Policies')}</div><div class="prose"><h1 style="font-size:clamp(26px,3.4vw,36px)">Policies</h1><p class="note small">Draft policies for the demo. Have them reviewed by a lawyer before launch.</p>
+ <h3>Shipping</h3><p>Standard delivery takes 3–5 working days and is free on orders of ₹999 or more, otherwise ₹49. Express delivery takes 1–2 working days for ₹149. Sundays are not delivery days.</p>
+ <h3>Returns &amp; refunds</h3><p>Request a return within 7 days of delivery for unused items in original packaging. Refunds go back to the original payment method within 5–7 working days of pickup. Cash on delivery refunds go to a bank account you provide.</p>
+ <h3>Cancellations</h3><p>Cancel any order before it is packed. Paid orders are refunded in full.</p>
+ <h3>Privacy</h3><p>We store your name, contact details, addresses, orders and alerts to run your account. Card numbers, CVVs and UPI PINs are handled by the payment gateway and never reach our servers. You can turn off personalised recommendations in settings.</p>
+ <h3>Terms</h3><p>Prices include GST. Price estimates are informational and not a promise of future prices. We may cancel orders affected by an obvious pricing error and will refund any payment in full.</p></div></div>`;
+P.notfound=()=>LIVE.state==='connecting'&&/^p-/.test(UI.route)?`<div class="page"><div class="pdp"><div class="skel" style="aspect-ratio:1"></div><div style="display:grid;gap:12px;align-content:start"><div class="skel" style="height:22px;width:40%"></div><div class="skel" style="height:40px;width:80%"></div><div class="skel" style="height:34px;width:30%"></div><div class="skel" style="height:120px"></div></div></div></div>`:`<div class="page"><div class="panel empty"><h3>Page not found</h3><p>That link may be out of date.</p><a class="btn pri" style="margin-top:12px" href="#home">Go home</a></div></div>`;
+
+/* ================= recommendations ================= */
+function recommend(){
+  const u=me(),pers=!u||u.prefs?.personal!==false;
+  const seen=[...recent(),...wish(),...cart().map(i=>i.pid)].filter(i=>PRODUCTS[i]);
+  const catW={},brandW={};let prices=[];
+  if(pers)seen.forEach((id,i)=>{const p=PRODUCTS[id];catW[p.cat]=(catW[p.cat]||0)+3-Math.min(2,i*.2);brandW[p.brand]=(brandW[p.brand]||0)+1;prices.push(priceOf(id))});
+  (S.prefs[ukey()]||[]).forEach(c=>catW[c]=(catW[c]||0)+4);
+  const med=prices.length?prices.sort((a,b)=>a-b)[Math.floor(prices.length/2)]:null;
+  const all=Object.values(PRODUCTS).filter(p=>!recent().includes(p.id));
+  if(!Object.keys(catW).length)return bestValue(Object.values(PRODUCTS)).concat(all).filter((p,i,a)=>a.indexOf(p)===i);
+  return all.map(p=>{let s=(catW[p.cat]||0)*2+(brandW[p.brand]||0);if(med){const r=priceOf(p.id)/med;if(r>.6&&r<1.4)s+=2}const st=stats(p.id,0);if(st.drop30p>3)s+=1;return{p,s}}).sort((a,b)=>b.s-a.s).map(x=>x.p);
+}
+
+/* ================= router ================= */
+function render(){
+  UI.pendingRender=false;
+  let h=decodeURIComponent(location.hash.slice(1))||'home';UI.route=h;
+  let html;
+  if(P[h]&&!['cat','brand','series','product','order'].includes(h))html=P[h]();
+  else if(h.startsWith('cat-'))html=P.cat(h.slice(4));
+  else if(h.startsWith('brand-'))html=P.brand(h.slice(6));
+  else if(h.startsWith('series-'))html=P.series(h.slice(7));
+  else if(h.startsWith('p-')){const id=h.slice(2);if(PRODUCTS[id]){S.views[id]=(S.views[id]||0)+1;const r=recent().filter(x=>x!==id);r.unshift(id);S.recent[ukey()]=r.slice(0,12);save()}html=P.product(id)}
+  else if(h.startsWith('o-'))html=P.order(h.slice(2));
+  else html=P.notfound();
+  $('#app').innerHTML=html;chrome();bindChart();
+  if(!UI.keepScroll)window.scrollTo({top:0,behavior:'instant'});UI.keepScroll=false;
+  document.title=(h==='home'?'':(($('#app h1')?.textContent||'')+' · '))+'ShoppingMart';
+}
+const rerender=()=>{UI.keepScroll=true;render()};
+window.addEventListener('hashchange',()=>{const h=location.hash;if(/^#(cat|brand|series|search|shop)/.test(h)){if(UI.lastList!==h&&!UI.keepFilters)UI.filters={};UI.keepFilters=false;UI.lastList=h}render()});
+
+/* ================= actions ================= */
+function go(to){if(location.hash==='#'+to)render();else location.hash=to}
+function addToCart(pid,sku,qty=1){
+  const p=PRODUCTS[pid];if(!sku){const sel=UI.sel[pid];const oi=sel?.o??cheapestOpt(p);let ci=sel?.c??0;if(!stockOf(skuOf(pid,oi,ci)))ci=p.cols.findIndex((_,i)=>stockOf(skuOf(pid,oi,i)));if(ci<0){toast('Out of stock in this variant.',false);return false}sku=skuOf(pid,oi,ci)}
+  const [,oi,ci]=sku.split('~').map((x,i)=>i?+x:x);const c=cart(),ex=c.find(i=>i.sku===sku),have=ex?ex.qty:0,st=stockOf(sku);
+  if(have+qty>st){toast(st?`Only ${st} available.`:'Out of stock.',false);return false}
+  if(have+qty>5){toast('Limit of 5 per item.',false);return false}
+  ex?ex.qty+=qty:c.push({pid,oi,ci,sku,qty});save();return true;
+}
+const A={
+ go:el=>go(el.dataset.to),doSearch,
+ openCart:()=>cartDrawer(false),closeLayer,
+ addCart:el=>{if(addToCart(el.dataset.id,el.dataset.sku)){chrome();cartDrawer(true)}},
+ buyNow:el=>{if(addToCart(el.dataset.id,el.dataset.sku)){chrome();go('checkout')}},
+ toggleWish:el=>{const w=wish(),id=el.dataset.id,i=w.indexOf(id);i>=0?w.splice(i,1):w.unshift(id);save();toast(i>=0?'Removed from wishlist':'Saved to wishlist');rerender()},
+ toggleCmp:el=>{const id=el.dataset.id,c=S.compare,i=c.indexOf(id);
+   if(i>=0)c.splice(i,1);else{if(c.length&&PRODUCTS[c[0]].cat!==PRODUCTS[id].cat){S.compare=[id];toast(`Started a new ${CATS[PRODUCTS[id].cat].name.toLowerCase()} comparison. Compare works within one category.`)}else if(c.length>=4){toast('You can compare up to 4 products.',false);if(el.type==='checkbox')el.checked=false;return}else c.push(id)}
+   save();rerender()},
+ clearCmp:()=>{S.compare=[];save();rerender()},
+ demoCompare:el=>{S.compare=el.dataset.ids.split(',').filter(i=>PRODUCTS[i]).slice(0,4);save();go('compare')},
+ prio:el=>{UI.prio[el.dataset.c]=el.dataset.k;delete UI.wts[el.dataset.c];UI.custom=UI.custom||{};UI.custom[el.dataset.c]=false;rerender()},
+ opt:el=>{UI.sel[curId()].o=+el.dataset.o;rerender()},col:el=>{UI.sel[curId()].c=+el.dataset.c;rerender()},view:el=>{UI.sel[curId()].v=+el.dataset.v;rerender()},
+ zoom:el=>el.classList.toggle('zoom'),
+ range:el=>{UI.range=+el.dataset.d;const p=PRODUCTS[curId()];$('#history').innerHTML=priceIntel(p,UI.sel[p.id].o);bindChart()},
+ alertForm:el=>{if(!S.session){toast('Sign in to set price alerts.',false);go('login');return}openLayer(alertFormHTML(el.dataset.id,+el.dataset.o))},
+ alertEdit:el=>{const a=S.alerts.find(x=>x.id===el.dataset.aid);openLayer(alertFormHTML(a.pid,a.oi,a))},
+ alertPause:el=>{const a=S.alerts.find(x=>x.id===el.dataset.aid);a.status=a.status==='paused'?'active':'paused';if(a.status==='active')a.lastFired=null;save();rerender()},
+ alertDel:el=>{const a=S.alerts.find(x=>x.id===el.dataset.aid);openLayer(`<h3>Delete this alert?</h3><p class="muted" style="margin:8px 0 16px">${esc(PRODUCTS[a.pid].title)}: ${alertText(a)}</p><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn sec" data-act="closeLayer">Keep it</button><button class="btn danger" data-act="alertDelYes" data-aid="${a.id}">Delete alert</button></div>`)},
+ alertDelYes:el=>{S.alerts=S.alerts.filter(x=>x.id!==el.dataset.aid);save();closeLayer();toast('Alert deleted');rerender()},
+ readAll:()=>{S.notifs.forEach(n=>{if(n.user===S.session)n.read=true});save();rerender()},
+ qty:el=>{const c=cart(),it=c[+el.dataset.i];it.qty=Math.max(1,it.qty+ +el.dataset.d);save();rerender()},
+ rmCart:el=>{cart().splice(+el.dataset.i,1);save();toast('Removed from cart');rerender()},
+ saveLater:el=>{const it=cart().splice(+el.dataset.i,1)[0];(S.saved[ukey()]=S.saved[ukey()]||[]).unshift(it);save();rerender()},
+ moveCart:el=>{const s=S.saved[ukey()],it=s.splice(+el.dataset.i,1)[0];it.qty=1;if(!addToCart(it.pid,it.sku))s.splice(+el.dataset.i,0,it);save();rerender()},
+ rmCoupon:()=>{UI.coupon=null;rerender()},
+ ckAddr:el=>{UI.checkout.addr=el.value;rerender()},ckShip:el=>{UI.checkout.ship=el.value;rerender()},ckPay:el=>{UI.checkout.pay=el.value;rerender()},
+ ckNext:()=>{UI.checkout.step=Math.min(4,UI.checkout.step+1);rerender();window.scrollTo({top:0})},ckBack:()=>{UI.checkout.step=Math.max(1,UI.checkout.step-1);rerender()},
+ placeOrder:()=>{const o=createOrder();if(!o)return;if(o.payment.method==='cod'){reserve(o);finishOrder(o)}else{save();gateway(o)}},
+ gwResult:el=>gwResult(el.dataset.oid,el.dataset.r,el.dataset.txn),
+ retryPay:el=>{const o=S.orders.find(x=>x.id===el.dataset.oid);const bad=o.items.find(i=>stockOf(i.sku)<i.qty);if(bad){toast(`${bad.title} no longer has enough stock.`,false);return}o.status='Order Placed';o.payment.status='pending';save();gateway(o)},
+ cancelOrder:el=>openLayer(`<h3>Cancel order ${el.dataset.oid}?</h3><p class="muted" style="margin:8px 0 16px">Any payment is refunded to the original method in 5–7 working days.</p><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn sec" data-act="closeLayer">Keep order</button><button class="btn danger" data-act="cancelYes" data-oid="${el.dataset.oid}">Cancel order</button></div>`),
+ cancelYes:el=>{const o=S.orders.find(x=>x.id===el.dataset.oid);if(o.reserved){o.items.forEach(i=>S.sold[i.sku]=Math.max(0,(S.sold[i.sku]||0)-i.qty));o.reserved=false}o.status='Cancelled';o.timeline.push({s:'Cancelled',at:Date.now()});if(o.payment.status==='paid'){o.payment.status='refunded';o.refund={amount:o.total,status:'initiated'}}save();closeLayer();toast('Order cancelled');rerender()},
+ returnOrder:el=>{const o=S.orders.find(x=>x.id===el.dataset.oid);o.status='Return Requested';o.timeline.push({s:'Return Requested',at:Date.now()});save();toast('Return requested. We will schedule a pickup.');rerender()},
+ invoice:el=>invoice(S.orders.find(x=>x.id===el.dataset.oid)),
+ logout:(el,e)=>{e.preventDefault();S.session=null;save();toast('Signed out');go('home')},
+ demoLogin:async el=>{await seedUsers();const u=S.users.find(x=>x.email===(el.dataset.who==='admin'?'admin@shoppingmart.in':'demo@shoppingmart.in'));login(u)},
+ setReturn:el=>{UI.after=el.dataset.to;go(el.getAttribute('href').slice(1))},
+ delAddr:el=>{S.addresses[S.session]=(S.addresses[S.session]||[]).filter(a=>a.id!==el.dataset.id);save();rerender()},
+ pref:el=>{const k=ukey(),a=S.prefs[k]=S.prefs[k]||[],i=a.indexOf(el.dataset.cat);i>=0?a.splice(i,1):a.push(el.dataset.cat);save();rerender()},
+ clearRecent:()=>{S.recent[ukey()]=[];save();rerender()},
+ setSort:(el,e)=>{UI.filters={sort:el.dataset.sort};UI.keepFilters=true;if(location.hash==='#shop'){UI.keepFilters=false;render()}else location.hash='shop'},
+ toggleFilters:()=>$('#filters').classList.toggle('open'),
+ fArr:el=>{const k=el.dataset.k,a=UI.filters[k]=UI.filters[k]||[],v=el.dataset.v,i=a.indexOf(v);i>=0?a.splice(i,1):a.push(v);rerender();$('#filters')&&innerWidth<900&&$('#filters').classList.add('open')},
+ fBool:el=>{UI.filters[el.dataset.k]=el.checked;rerender();innerWidth<900&&$('#filters').classList.add('open')},
+ fRange:el=>{UI.filters.min=+el.dataset.a||'';UI.filters.max=+el.dataset.b||'';rerender()},
+ fClear:()=>{UI.filters={sort:UI.filters.sort};rerender()},
+ adminTab:el=>{UI.adminTab=el.dataset.t;rerender()},
+ advance:el=>{const o=S.orders.find(x=>x.id===el.dataset.oid),i=FLOW.indexOf(o.status);let n=FLOW[i+1];if(n==='Payment Confirmed'&&o.payment.status==='cod')n='Processing';o.status=n;o.timeline.push({s:n,at:Date.now()});if(n==='Shipped')o.tracking='DLV'+Math.floor(1e9+Math.random()*9e9);if(n==='Delivered'&&o.payment.status==='cod')o.payment.status='paid';
+   S.notifs.unshift({id:uid('n'),user:o.user,oid:o.id,msg:`Order ${o.id}: ${n}.`,at:Date.now(),read:false});audit('order.status',o.id+' → '+n);save();rerender()},
+ refund:el=>{const o=S.orders.find(x=>x.id===el.dataset.oid);o.status='Refunded';o.timeline.push({s:'Refunded',at:Date.now()});o.refund={amount:o.total,status:'initiated'};o.payment.status='refunded';o.items.forEach(i=>S.sold[i.sku]=Math.max(0,(S.sold[i.sku]||0)-i.qty));S.notifs.unshift({id:uid('n'),user:o.user,oid:o.id,msg:`Refund of ${inr(o.total)} initiated for ${o.id}.`,at:Date.now(),read:false});audit('order.refund',o.id);save();rerender()},
+ runJob:()=>{const ids=Object.keys(PRODUCTS),r=rng(Date.now()>>>0);let n=0;
+   for(let k=0;k<6;k++){const p=PRODUCTS[ids[Math.floor(r()*ids.length)]],oi=Math.floor(r()*p.opts.length),cur=priceOf(p.id,oi);const nv=Math.round(cur*(1-(.02+r()*.08)*(r()<.75?1:-.4))/10000)*10000;recordPrice(p.id,oi,nv);n++}
+   const fired=evaluateAlerts('price-job');S.jobs.unshift({at:Date.now(),kind:'Sample feed ingestion',n,fired,ok:true});save();toast(`Recorded ${n} prices. ${fired} alert${fired===1?'':'s'} fired.`);rerender()},
+ exportCsv:()=>{const rows=['product_id,title,brand,category,variant_index,variant,price_inr'];Object.values(PRODUCTS).forEach(p=>p.opts.forEach((o,oi)=>rows.push([p.id,`"${p.title}"`,p.brand,p.cat,oi,`"${o.v}"`,Math.round(priceOf(p.id,oi)/100)].join(','))));
+   openLayer(`<h3>Catalog CSV</h3><p class="small muted" style="margin:6px 0 10px">Copy this into a spreadsheet.</p><textarea class="in mono small" rows="10" id="csvOut" readonly>${esc(rows.join('\n'))}</textarea><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px"><button class="btn sec" data-act="closeLayer">Close</button><button class="btn pri" data-act="copyCsv">Copy</button></div>`)},
+ copyCsv:()=>{const t=$('#csvOut');navigator.clipboard.writeText(t.value).then(()=>toast('Copied')).catch(()=>{t.select();toast('Press Ctrl/Cmd+C to copy')})},
+};
+const curId=()=>UI.route.slice(2);
+function recordPrice(pid,oi,paise){const k=pid+'~'+oi;S.ov.price[k]=S.ov.price[k]||{};S.ov.price[k]['0']=paise;audit('price.record',`${pid} #${oi} = ${inr(paise)}`)}
+function audit(kind,detail){(S.audit=S.audit||[]).unshift({kind,detail,by:S.session,at:Date.now()});S.audit=S.audit.slice(0,200)}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;const a=A[el.dataset.act];if(!a)return;
+  if(['INPUT','SELECT'].includes(el.tagName)&&!['toggleCmp','fArr','fBool','ckAddr','ckShip','ckPay'].includes(el.dataset.act))return;
+  if(el.tagName==='A'&&el.dataset.act==='closeLayer'){closeLayer();return}
+  if(el.tagName!=='INPUT')e.preventDefault();a(el,e)});
+document.addEventListener('change',e=>{const el=e.target;if(!el.dataset?.act)return;const k=el.dataset.k;
+  if(el.dataset.act==='fSel'){UI.filters[k]=el.value;rerender()}
+  if(el.dataset.act==='fNum'){UI.filters[k]=el.value?+el.value:'';rerender()}
+  if(el.dataset.act==='setStock'){const v=Math.max(0,+el.value||0);S.ov.stock[el.dataset.sku]=v+(S.sold[el.dataset.sku]||0);audit('stock.set',el.dataset.sku+' = '+v);save();toast('Stock updated')}
+});
+document.addEventListener('input',e=>{const el=e.target;
+  if(el.dataset?.act==='wt'){const c=el.dataset.c,cat=CATS[PRODUCTS[S.compare[0]].cat];UI.wts[c]=UI.wts[c]||{...cat.presets[UI.prio[c]||'overall'].w};UI.wts[c][el.dataset.g]=+el.value;UI.custom=UI.custom||{};UI.custom[c]=true;clearTimeout(UI.wtT);UI.wtT=setTimeout(()=>{rerender();const f=$('#wt-'+el.dataset.g);f&&f.focus()},120)}
+  if(el.dataset?.act==='adminQ'){UI.adminQ=el.value;clearTimeout(UI.aq);UI.aq=setTimeout(()=>{rerender();const f=$('#adminQ');f.focus();f.setSelectionRange(f.value.length,f.value.length)},250)}
+});
+
+/* ================= forms ================= */
+async function seedUsers(){if(S.users.some(u=>u.email==='demo@shoppingmart.in'))return;
+  for(const [name,email,mobile,pw,role] of [['Ananya Rao','demo@shoppingmart.in','9876543210','Demo@1234','customer'],['Store Admin','admin@shoppingmart.in','9000000001','Admin@1234','admin']]){const salt=Math.random().toString(36).slice(2);S.users.push({id:uid('u'),name,email,mobile,role,salt,hash:await sha(salt+pw),at:Date.now(),prefs:{email:false,personal:true}})}
+  const d=S.users.find(u=>u.email==='demo@shoppingmart.in');S.addresses[d.id]=[{id:uid('a'),name:'Ananya Rao',phone:'9876543210',line:'Flat 4B, Sai Residency, Main Road',city:'Kakinada',state:'Andhra Pradesh',pin:'533001'}];save()}
+function login(u){const g=S.carts.guest||[];const c=S.carts[u.id]=S.carts[u.id]||[];g.forEach(i=>{const ex=c.find(x=>x.sku===i.sku);ex?ex.qty=Math.min(5,ex.qty+i.qty):c.push(i)});S.carts.guest=[];
+  const gw=S.wish.guest||[];S.wish[u.id]=[...new Set([...(S.wish[u.id]||[]),...gw])];S.wish.guest=[];
+  S.session=u.id;save();toast('Signed in as '+u.name);const to=UI.after||(u.role==='admin'?'admin':'account');UI.after=null;go(to)}
+const F={
+ async login(f){await seedUsers();const id=$('#lId').value.trim().toLowerCase(),pw=$('#lPw').value;const u=S.users.find(x=>x.email===id||x.mobile===id);
+   UI.fails=UI.fails||0;if(UI.fails>=5&&Date.now()<UI.lockUntil){$('#lErr').textContent='Too many attempts. Try again in a minute.';return}
+   if(!u||u.hash!==await sha(u.salt+pw)){UI.fails++;if(UI.fails>=5)UI.lockUntil=Date.now()+6e4;$('#lErr').textContent='That email/mobile and password don\'t match. Check them and try again.';return}UI.fails=0;login(u)},
+ async register(){const name=$('#rName').value.trim(),email=$('#rEmail').value.trim().toLowerCase(),mob=$('#rMob').value.trim(),pw=$('#rPw').value,pw2=$('#rPw2').value,err=$('#rErr');
+   if(!/[A-Za-z]/.test(pw)||!/\d/.test(pw))return err.textContent='Use at least one letter and one number in your password.';
+   if(pw!==pw2)return err.textContent='The two passwords don\'t match.';
+   if(S.users.some(u=>u.email===email))return err.textContent='An account with this email already exists. Sign in instead.';
+   if(S.users.some(u=>u.mobile===mob))return err.textContent='This mobile number is already registered.';
+   const salt=Math.random().toString(36).slice(2),u={id:uid('u'),name,email,mobile:mob,role:'customer',salt,hash:await sha(salt+pw),at:Date.now(),prefs:{email:false,personal:true}};S.users.push(u);save();login(u)},
+ forgot(){const e=$('#fEmail').value.trim().toLowerCase();const u=S.users.find(x=>x.email===e);const code=String(Math.floor(100000+Math.random()*900000));if(u)S.resets[u.id]={code,exp:Date.now()+9e5};save();UI.reset={email:e,code:u?code:'(no account with that email, so no code was sent)'};rerender()},
+ async reset(){const u=S.users.find(x=>x.email===UI.reset.email),r=u&&S.resets[u.id];if(!r||r.code!==$('#fCode').value.trim()||Date.now()>r.exp)return $('#fErr').textContent='That code is wrong or has expired.';u.salt=Math.random().toString(36).slice(2);u.hash=await sha(u.salt+$('#fPw').value);delete S.resets[u.id];UI.reset=null;save();toast('Password updated. Sign in with your new password.');go('login')},
+ profile(){const u=me();u.name=$('#sName').value.trim();u.mobile=$('#sMob').value.trim();save();toast('Profile saved');rerender()},
+ prefs(){const u=me();u.prefs={...u.prefs,email:$('#pEmail').checked,personal:$('#pPers').checked};save();toast('Preferences saved')},
+ async password(){const u=me();if(u.hash!==await sha(u.salt+$('#cOld').value))return $('#cErr').textContent='Your current password is not correct.';const np=$('#cNew').value;if(!/[A-Za-z]/.test(np)||!/\d/.test(np))return $('#cErr').textContent='Use at least one letter and one number.';u.salt=Math.random().toString(36).slice(2);u.hash=await sha(u.salt+np);save();toast('Password updated');rerender()},
+ addr(f){const a={id:uid('a'),name:$('#adName').value.trim(),phone:$('#adPhone').value.trim(),line:$('#adLine').value.trim(),city:$('#adCity').value.trim(),pin:$('#adPin').value.trim(),state:$('#adState').value};(S.addresses[S.session]=S.addresses[S.session]||[]).push(a);if(f.dataset.ck)UI.checkout.addr=a.id;save();toast('Address saved');rerender()},
+ coupon(){const v=$('#cpn').value.trim().toUpperCase();UI.coupon=v||null;rerender()},
+ alert(f){const pid=f.dataset.id,oi=+f.dataset.o,type=$('input[name="atype"]:checked',f).value,st=stats(pid,oi),cur=st.cur,err=$('#aErr');
+   const a=f.dataset.aid?S.alerts.find(x=>x.id===f.dataset.aid):{id:uid('al'),user:S.session,pid,oi,created:cur,at:Date.now()};
+   a.type=type;a.freq=$('#aFreq').value;a.end=$('#aEnd').value?new Date($('#aEnd').value).getTime():null;a.status='active';a.lastFired=null;
+   if(type==='below'){const t=+$('#aTarget').value*100;if(!t)return err.textContent='Enter a target price.';if(t>=cur)return err.textContent=`Pick a target below the current ${inr(cur)}.`;a.target=t}
+   if(type==='pct'){const p=+$('#aPct').value;if(!(p>0&&p<90))return err.textContent='Enter a percentage between 1 and 89.';a.pct=p;a.basePrice=cur}
+   if(type==='month'){const m=+$('#aAmt').value*100;if(!m)return err.textContent='Enter an amount.';a.amount=m;a.refPrice=st.m1;a.refDate=dayDate(-30).getTime()}
+   if(a.end&&a.end<TODAY.getTime())return err.textContent='The end date is in the past.';
+   if(!f.dataset.aid)S.alerts.push(a);const fired=evaluateAlerts('on-create');save();closeLayer();toast(fired?'Alert saved, and it is already met. Check notifications.':'Alert saved. We will notify you.');rerender()},
+ review(f){const s=+$('#rvStars').value,t=$('#rvText').value.trim();if(!s)return;const id=f.dataset.id,u=me();(S.reviews[id]=S.reviews[id]||[]).unshift({name:u.name,stars:s,text:t,at:Date.now(),verified:S.orders.some(o=>o.user===u.id&&o.items.some(i=>i.pid===id)&&o.payment.status==='paid')});save();toast('Review posted');rerender()},
+ newsletter(){const e=$('#nlEmail').value.trim();if(!S.newsletter.includes(e))S.newsletter.push(e);save();toast('Subscribed. Watch your inbox once email is configured.');$('#nlEmail').value=''},
+ contact(){toast('Message received. We will reply within one working day.');rerender()},
+ setPrice(f){const pid=f.dataset.id,oi=+f.dataset.o,v=+$(`#sp-${pid}-${oi}`).value;if(!(v>=1)){toast('Enter a price in rupees.',false);return}recordPrice(pid,oi,Math.round(v)*100);const fired=evaluateAlerts('admin-update');S.jobs.unshift({at:Date.now(),kind:'Admin price update',n:1,fired,ok:true});save();toast(`Price recorded. ${fired} alert${fired===1?'':'s'} fired.`);rerender()},
+ csv(){const lines=$('#csvIn').value.trim().split('\n').filter(Boolean);let n=0,bad=[];for(const [i,l] of lines.entries()){const [pid,oi,pr]=l.split(',').map(s=>s.trim());if(!PRODUCTS[pid]||!PRODUCTS[pid].opts[+oi]||!(+pr>0)){bad.push(i+1);continue}recordPrice(pid,+oi,Math.round(+pr)*100);n++}
+   const fired=evaluateAlerts('csv-import');S.jobs.unshift({at:Date.now(),kind:'CSV import',n,fired,ok:!bad.length,err:bad.length?`Rejected line${bad.length>1?'s':''} ${bad.join(', ')}: unknown product, variant or price`:''});save();toast(`Imported ${n} price${n===1?'':'s'}${bad.length?`, ${bad.length} rejected`:''}.`,!bad.length);rerender()},
+ addProduct(){const title=$('#npTitle').value.trim(),id=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Math.random().toString(36).slice(2,5);const cat=$('#npCat').value;
+   const p={id,cat,brand:$('#npBrand').value.trim(),series:$('#npSeries').value.trim(),title,base:Math.round(+$('#npPrice').value),decay:0,sale:0,days:1,opts:[{v:'Standard',add:0,spec:{}}],cols:[C($('#npCol').value.trim(),'#6B7686')],spec:{},feats:[$('#npFeat').value.trim()],custom:true};
+   S.custom.push(p);audit('product.add',id);save();catalog();toast('Product added');rerender()},
+};
+document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(!f)return;e.preventDefault();F[f.dataset.form]?.(f)});
+
+/* ================= boot ================= */
+load();catalog();seedUsers().then(()=>{chrome()});
+if(S.session&&!me())S.session=null;
+render();
+</script>
+<script type="module" src="js/store-sync.js"></script>
+
+</body>
+</html>
